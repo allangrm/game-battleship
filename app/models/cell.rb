@@ -5,6 +5,8 @@
 # @since 19-07-2026
 
 class Cell
+  attr_reader :row, :col
+  attr_accessor :ship, :status
   def initialize(row, col )
     @row = row
     @col = col
@@ -13,12 +15,15 @@ class Cell
   end
 
   # no caso inicial nao esta ocupado por nenhum navio
+  # @return [Boolean]
   def occupied?
     !!@ship
   end
 
+  # verifica o estado atual da celula
+  # @return [Boolean]
   def attacked?
-    #@status vai mudar para algum outro estado
+    @status != :unknown
   end
 
   # estados possiveis:
@@ -29,7 +34,4 @@ class Cell
 
   # reader: getter
   # accessor: getter e setter
-  attr_reader :row, :col
-  attr_accessor :ship, :status
-
 end
