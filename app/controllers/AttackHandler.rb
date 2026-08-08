@@ -19,4 +19,43 @@ class AttackHandler
   def initialize(board)
     @board = board
   end
+
+  # row, col: coordenada clicada
+  # weapon: instância de BasicShot, Missile ou Airplane
+  # **opts: repassado à arma (ex: orientation: :col, pro Airplane)
+  # Retorna um Array<AttackResult> — só com células que de fato mudaram de estado nesse ataque (ver resolve_attack).
+  def attack(row, col, weapon, **opts)
+    validate!(row, col)
+
+    cells = weapon.target_cells(row, col, @board, **opts)
+    cells.map{|(r, c)| resolve_attack(r, c) }.compact
+  end
+
+  private
+
+  def validate!(row, col)
+    unless @board.valid_coordinate?(row, col)
+      raise InvalidAttackError, "Coordenada fora do tabuleiro: (#{row}, #{col})"
+    end
+    cell = @board.cell_at(row, col)
+    if cell.attacked?
+      raise InvalidAttackError, "Coordenada (#{row}, #{col}) já foi atacada"
+    end
+  end
+
+  # Aplica o efeito do tiro na célula
+  def resolve_attack(row, col)
+    cell = @board.cell_at(row, col)
+    return nil unless cell
+    return nil if cell.attaceked?
+
+    if cell.occupied?
+      cell.ship.register_hit
+      cell.status = cell.ship.sunk? ? :sunk : :hit
+      AttackResult.new(cell, true)
+    else
+      cell.status=:miss
+      AttackResult.new(cell, false)
+    end
+  end
 end
