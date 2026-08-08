@@ -4,10 +4,10 @@
 # @version 1.0
 # @since 07-08-2026
 
-require_relative "weapon"
+require_relative "Weapon"
 
 # Avião, atira em uma row ou col inteira
-class Airplane < weapon
+class Airplane < Weapon
   def target_cells(row, col, board, orientation: :row, **_opts)
     candidates =
       case orientation
