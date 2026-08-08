@@ -1,4 +1,4 @@
-# Representa uma casa do tabuleiro.
+# Representa uma casa/celula do tabuleiro.
 #
 # @author Allan Guilherme
 # @version 1.0

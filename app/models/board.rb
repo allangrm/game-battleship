@@ -41,6 +41,31 @@ class Board
     ships << ship
   end
 
+  # Posiciona navios automaticamente de forma aleatória
+  # @param fleet [Array<Ship>] frota de navios a posicionar
+  def auto_place_ships(fleet)
+    fleet.each do |ship|
+      placed = false
+
+      until placed
+        #escolhe uma orientação aletoria pro barco (vert ou horiz)
+        orientarion = [:horizontal, :vertical].sample
+        #escolhe a posição inicial aleatoria
+        row = rand(size)
+        col = rand(size)
+
+        #gera coordenadas baseadas na orientacao
+        coordinates = generate_coordinates(row, col, ship.size, orientarion)
+
+        #tenta posicionar se a posição for válida
+        if coordinates && valid_coordinate?(ship, coordinates)
+          place_ship(ship, coordinates)
+          placed = true
+        end
+      end
+    end
+  end
+
   # valida se as coordenadas formam um posicionamento válido para o navio
   # @param ship [Ship] navio a posicionar
   # @param coordinates [Array<Array(Integer, Integer)>] coordenadas
@@ -79,6 +104,53 @@ class Board
     end
   end
 
+  # Recebe um ataque na coordenada/celula (row, col)
+  # @param row [Integer] linha do ataque
+  # @param col [Integer] coluna do ataque
+  # @return [Symbol] :hit, :miss, :sunk, :invalid ou :already_attacked
+  def receive_attack(row, col)
+    return :invalid unless valid_coordinate?(row, col)
+
+    cell = cell_at(row, col)
+    #verifica se ja foi atacado
+    return :already_attacked if cell.attacked?
+
+    #se a celula estiver ocupada pega o navio q aquela
+    #celula pertence e define o status da celula como atacada
+    if cell.occupied?
+      ship = cell.ship
+      cell.status = :hit
+      ship.register_hit
+
+      #verifica se o navio ja levou hit em todas as celulas dele
+      if ship.sunk?
+        ship.cells.each { |c| c.status = :sunk }
+        :sunk
+      else
+        :hit
+      end
+    else
+      cell.status = :miss
+      :miss
+    end
+  end
+
+  # gera coordenadas que um navio vai ocupar com base na posição inicial e orientação
+  def generate_coordinates(row, col, length, orientation)
+    coords = (0...length).map do |i| #range; map transforma cada i em par[r,c]
+      if orientation == :horizontal
+        [row, col + i]
+      else
+        [row + i, col]
+      end
+    end
+
+    # retorna nil se alguma coordenada ficar fora do tabuleiro
+    return nil unless coords.all? { |(r, c)| valid_coordinate?(r, c) }
+
+    coords
+  end
+
   # verifica se todos os navios foram afundados
   def all_ships_sunk?
     ships.all?(&:sunk?)
@@ -88,9 +160,5 @@ class Board
   def ships_remaining
     ships.reject(&:sunk?).length
   end
-
-
-  #todo def auto_place_ships
-
 
 end
