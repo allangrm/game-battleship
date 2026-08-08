@@ -6,7 +6,7 @@
 require_relative "weapon"
 
 # Ataque básico, atira em uma única célula. (RF06)
-class basic_shot < weapon
+class Basic_shot < weapon
   def target_cells(row, col, board, **_opts)
     valid_cells([[row, col]], board)
   end
