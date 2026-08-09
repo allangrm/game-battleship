@@ -47,7 +47,7 @@ class AttackHandler
   def resolve_attack(row, col)
     cell = @board.cell_at(row, col)
     return nil unless cell
-    return nil if cell.attaceked?
+    return nil if cell.attacked?
 
     if cell.occupied?
       cell.ship.register_hit

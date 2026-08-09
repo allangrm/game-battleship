@@ -4,7 +4,7 @@
 # @version 1.0
 # @since 07-08-2026
 
-require_relative "Weapon"
+require_relative "weapon"
 
 # Avião, atira em uma row ou col inteira
 class Airplane < Weapon

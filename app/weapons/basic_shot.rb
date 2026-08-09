@@ -3,7 +3,7 @@
 # @author Júlio Pedro
 # @version 1.0
 # @since 07-08-2026
-require_relative "Weapon"
+require_relative "weapon"
 
 # Ataque básico, atira em uma única célula. (RF06)
 class Basic_shot < Weapon

@@ -3,7 +3,7 @@
 # @author Júlio Pedro
 # @version 1.0
 # @since 07-08-2026
-require_relative "Weapon"
+require_relative "weapon"
 
 # Míssil, atira em um bloco 2x2. a coordenada clicada é o canto superior esquerdo do bloco.
 class Missible < Weapon
