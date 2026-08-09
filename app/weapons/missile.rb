@@ -6,7 +6,7 @@
 require_relative "weapon"
 
 # Míssil, atira em um bloco 2x2. a coordenada clicada é o canto superior esquerdo do bloco.
-class Missible < Weapon
+class Missile < Weapon
   def target_cells(row, col, board, **_opts)
     candidates = [
       [row, col],
