@@ -1,164 +1,168 @@
-# Representa o tabuleiro.
+# frozen_string_literal: true
+
+require_relative "cell"
+require_relative "ship"
+
+# Representa o tabuleiro e concentra as invariantes de posicionamento e ataque.
+# Controllers podem escolher coordenadas, mas somente o Board altera Cell/Ship.
 #
 # @author Allan Guilherme
-# @version 1.0
-# @since 06-08-2026
-
+# @version 1.1
 class Board
+  class AutoPlacementError < StandardError; end
+
+  ORIENTATIONS = %i[horizontal vertical].freeze
+  DEFAULT_AUTO_PLACEMENT_ATTEMPTS = 1_000
+
   attr_reader :size, :grid, :ships
 
   def initialize(size)
+    raise ArgumentError, "O tamanho do tabuleiro deve ser positivo" unless size.is_a?(Integer) && size.positive?
+
     @size = size
-    @grid = Array.new(size) { |row| Array.new(size) { |col| Cell.new(row, col) }}
+    @grid = Array.new(size) { |row| Array.new(size) { |col| Cell.new(row, col) } }
     @ships = []
   end
 
-  #verifica se a coordenada está dentro dos limites do tabuleiro
   def valid_coordinate?(row, col)
-    row.between?(0, size - 1) && col.between?(0, size - 1)
+    row.is_a?(Integer) && col.is_a?(Integer) &&
+      row.between?(0, size - 1) && col.between?(0, size - 1)
   end
 
-  # retorna a célula na posição inserida (row, col)
-  # ou nil se fora dos limites
   def cell_at(row, col)
     return nil unless valid_coordinate?(row, col)
+
     grid[row][col]
   end
 
-  # posiciona um navio nas coordenadas fornecidas
-  # @param ship [Ship] o navio a ser posicionado
-  # @param coordinates [Array<Array(Integer, Integer)>] lista de celulas[row, col]
-  # @raise [ArgumentError] se a posição for inválida ou ja houver um navio
   def place_ship(ship, coordinates)
+    raise ArgumentError, "Navio já está posicionado" if ship.placed?
     raise ArgumentError, "Posição inválida para o navio" unless valid_placement?(ship, coordinates)
 
-    #aloca as coordenadas especificamente em |linha, coluna|
-    cells = coordinates.map { |(row, col)| cell_at(row, col) }
-
-    raise ArgumentError, "Já existe um navio em uma dessas células" if cells.any?(&:occupied?)
-
+    cells = coordinates.map { |row, col| cell_at(row, col) }
     ship.place(cells)
     ships << ship
+    ship
   end
 
-  # Posiciona navios automaticamente de forma aleatória
-  # @param fleet [Array<Ship>] frota de navios a posicionar
-  def auto_place_ships(fleet)
-    fleet.each do |ship|
-      placed = false
-
-      until placed
-        #escolhe uma orientação aletoria pro barco (vert ou horiz)
-        orientarion = [:horizontal, :vertical].sample
-        #escolhe a posição inicial aleatoria
-        row = rand(size)
-        col = rand(size)
-
-        #gera coordenadas baseadas na orientacao
-        coordinates = generate_coordinates(row, col, ship.size, orientarion)
-
-        #tenta posicionar se a posição for válida
-        if coordinates && valid_coordinate?(ship, coordinates)
-          place_ship(ship, coordinates)
-          placed = true
-        end
-      end
+  # Posiciona uma frota de forma aleatória e limitada. Em caso de falha, todos
+  # os navios posicionados por esta chamada são removidos para manter o Board
+  # consistente e permitir uma nova tentativa.
+  def auto_place_ships(
+    fleet,
+    random: Random.new,
+    max_attempts_per_ship: DEFAULT_AUTO_PLACEMENT_ATTEMPTS
+  )
+    unless max_attempts_per_ship.is_a?(Integer) && max_attempts_per_ship.positive?
+      raise ArgumentError, "O limite de tentativas deve ser positivo"
     end
+
+    placed_in_this_call = []
+
+    begin
+      fleet.each do |ship|
+        placed = try_auto_place_ship(ship, random, max_attempts_per_ship)
+        raise AutoPlacementError, "Não foi possível posicionar o navio #{ship.name}" unless placed
+
+        placed_in_this_call << ship
+      end
+    rescue StandardError
+      rollback_auto_placements(placed_in_this_call)
+      raise
+    end
+
+    ships
   end
 
-  # valida se as coordenadas formam um posicionamento válido para o navio
-  # @param ship [Ship] navio a posicionar
-  # @param coordinates [Array<Array(Integer, Integer)>] coordenadas
-  # @return [Boolean]
   def valid_placement?(ship, coordinates)
-    #quantidade de coordenadas deve ser igual ao tamanho do navio
+    return false unless coordinates.is_a?(Array)
     return false unless coordinates.length == ship.size
+    return false unless coordinates.all? { |row, col| valid_coordinate?(row, col) }
+    return false if coordinates.any? { |row, col| cell_at(row, col).occupied? }
 
-    #todas as coordenadas devem estar dentro do tabuleiro
-    return false unless coordinates.all? { |(row, col)| valid_coordinate?(row, col) }
-
-    #nenhuma célula das candidatas pode estar ocupada
-    return false if coordinates.any? { |(row, col)| cell_at(row, col).occupied? }
-
-    #coordenadas devem formar uma linha reta (horizontal ou vertical)
-    rows = coordinates.map(&:first) #extrai apenas o primeiro elemento do par [x,y]
-    cols = coordinates.map(&:last)  # " o ultimo elemento (apenas colunas)
-
-    horizontal = rows.uniq.length == 1 # mesma linha (verifica se todas as instancias em rows sao iguais,
-    # se sim diminui o tamanho; [2, 2, 2] .uniq transforma so em [2])
-    vertical   = cols.uniq.length == 1 # mesma coluna (mesma coisa)
-
+    rows = coordinates.map(&:first)
+    cols = coordinates.map(&:last)
+    horizontal = rows.uniq.length == 1
+    vertical = cols.uniq.length == 1
     return false unless horizontal || vertical
 
-    # coordenadas devem ser consecutivas (sem espacos brancos)
-    # .each_cons() metodo que agrupa os elementos do array em blocos de 2
-    # [4, 5, 6] vira [4, 5]: a = 4, b =5; [5, 6]: a = 5, b=6
-    # e para cada um desses pares sera verificado se a subtração de a em b
-    # resulta em 1, se resultar as casas sao consecutivas
-    if horizontal
-      sorted = cols.sort
-      sorted.each_cons(2).all? { |a, b| b - a == 1 }
-    else
-      sorted = rows.sort
-      sorted.each_cons(2).all? { |a, b| b - a == 1 }
-    end
+    axis = horizontal ? cols.sort : rows.sort
+    axis.each_cons(2).all? { |first, second| second - first == 1 }
   end
 
-  # Recebe um ataque na coordenada/celula (row, col)
-  # @param row [Integer] linha do ataque
-  # @param col [Integer] coluna do ataque
+  # Fonte de verdade do ataque a uma célula.
+  #
   # @return [Symbol] :hit, :miss, :sunk, :invalid ou :already_attacked
   def receive_attack(row, col)
     return :invalid unless valid_coordinate?(row, col)
 
     cell = cell_at(row, col)
-    #verifica se ja foi atacado
     return :already_attacked if cell.attacked?
 
-    #se a celula estiver ocupada pega o navio q aquela
-    #celula pertence e define o status da celula como atacada
     if cell.occupied?
-      ship = cell.ship
-      cell.status = :hit
-      ship.register_hit
-
-      #verifica se o navio ja levou hit em todas as celulas dele
-      if ship.sunk?
-        ship.cells.each { |c| c.status = :sunk }
-        :sunk
-      else
-        :hit
-      end
+      resolve_hit(cell)
     else
       cell.status = :miss
       :miss
     end
   end
 
-  # gera coordenadas que um navio vai ocupar com base na posição inicial e orientação
   def generate_coordinates(row, col, length, orientation)
-    coords = (0...length).map do |i| #range; map transforma cada i em par[r,c]
+    return nil unless ORIENTATIONS.include?(orientation)
+
+    coordinates = (0...length).map do |offset|
       if orientation == :horizontal
-        [row, col + i]
+        [row, col + offset]
       else
-        [row + i, col]
+        [row + offset, col]
       end
     end
 
-    # retorna nil se alguma coordenada ficar fora do tabuleiro
-    return nil unless coords.all? { |(r, c)| valid_coordinate?(r, c) }
+    return nil unless coordinates.all? { |candidate_row, candidate_col| valid_coordinate?(candidate_row, candidate_col) }
 
-    coords
+    coordinates
   end
 
-  # verifica se todos os navios foram afundados
   def all_ships_sunk?
-    ships.all?(&:sunk?)
+    ships.any? && ships.all?(&:sunk?)
   end
 
-  # conta quantos navios ainda estao vivos
   def ships_remaining
-    ships.reject(&:sunk?).length
+    ships.count { |ship| !ship.sunk? }
   end
 
+  private
+
+  def try_auto_place_ship(ship, random, max_attempts)
+    max_attempts.times do
+      orientation = ORIENTATIONS.sample(random: random)
+      row = random.rand(size)
+      col = random.rand(size)
+      coordinates = generate_coordinates(row, col, ship.size, orientation)
+      next unless coordinates && valid_placement?(ship, coordinates)
+
+      place_ship(ship, coordinates)
+      return true
+    end
+
+    false
+  end
+
+  def rollback_auto_placements(placed_ships)
+    placed_ships.each do |ship|
+      ships.delete(ship)
+      ship.unplace
+    end
+  end
+
+  def resolve_hit(cell)
+    ship = cell.ship
+    cell.status = :hit
+    ship.register_hit
+
+    return :hit unless ship.sunk?
+
+    ship.cells.each { |ship_cell| ship_cell.status = :sunk }
+    :sunk
+  end
 end

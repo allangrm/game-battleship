@@ -1,37 +1,25 @@
-# Representa uma casa/celula do tabuleiro.
+# frozen_string_literal: true
+
+# Representa uma casa/célula do tabuleiro.
 #
 # @author Allan Guilherme
-# @version 1.0
-# @since 19-07-2026
-
+# @version 1.1
 class Cell
   attr_reader :row, :col
   attr_accessor :ship, :status
-  def initialize(row, col )
+
+  def initialize(row, col)
     @row = row
     @col = col
     @ship = nil
     @status = :unknown
   end
 
-  # no caso inicial nao esta ocupado por nenhum navio
-  # @return [Boolean]
   def occupied?
-    !!@ship
+    !ship.nil?
   end
 
-  # verifica o estado atual da celula
-  # @return [Boolean]
   def attacked?
-    @status != :unknown
+    status != :unknown
   end
-
-  # estados possiveis:
-  # :unknown  - nao foi atacado
-  # :hit      - navio atacado
-  # :sunk     - navio atacado e afundado
-  # :miss     - água
-
-  # reader: getter
-  # accessor: getter e setter
 end

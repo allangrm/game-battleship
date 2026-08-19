@@ -1,38 +1,52 @@
-# Representa um barco posicionado no tabuleiro.
+# frozen_string_literal: true
+
+# Representa um navio posicionado no tabuleiro.
 #
 # @author Allan Guilherme
-# @version 1.0
-# @since 19-07-2026
-
+# @version 1.1
 class Ship
   attr_reader :name, :size, :cells, :hits
 
   def initialize(name, size)
+    raise ArgumentError, "O tamanho do navio deve ser positivo" unless size.is_a?(Integer) && size.positive?
+
     @name = name
     @size = size
     @cells = []
     @hits = 0
   end
 
-  # para cada celula percorrida, atribui a celula ao navio especifico
   def place(cells)
+    raise ArgumentError, "Quantidade de células diferente do tamanho do navio" unless cells.length == size
+    raise ArgumentError, "Navio já está posicionado" if placed?
+
     @cells = cells
     cells.each { |cell| cell.ship = self }
+    self
   end
 
-  # registra numeros de ataques sofrido pelo navio
   def register_hit
-    @hits += 1
+    @hits += 1 unless sunk?
   end
 
-  # verifica se o numero de hits é maior ou igual ao tamanho do navio
-  # @return [Boolean]
   def sunk?
-    @hits >= size
+    hits >= size
   end
 
-  #contador de quantas celulas vivas restam no navio
   def remaining_cells
-    size - @hits
+    [size - hits, 0].max
+  end
+
+  def placed?
+    !cells.empty?
+  end
+
+  # Desfaz o posicionamento durante o setup. É usado pelo rollback do
+  # posicionamento automático quando a frota completa não cabe no tabuleiro.
+  def unplace
+    cells.each { |cell| cell.ship = nil if cell.ship.equal?(self) }
+    @cells = []
+    @hits = 0
+    self
   end
 end

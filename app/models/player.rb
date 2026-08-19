@@ -1,18 +1,19 @@
-# Representa um Jogador.
+# frozen_string_literal: true
+
+# Representa o jogador humano e os dados da partida atual.
 #
 # @author Allan Guilherme
-# @version 1.0
-# @since 06-08-2026
+# @version 1.1
+class Player
+  attr_reader :name
+  attr_accessor :board, :score
 
-module Battleship
-  class Player
-    attr_reader :name
-    attr_accessor :board, :score
+  def initialize(name)
+    normalized_name = name.to_s.strip
+    raise ArgumentError, "O nome do jogador não pode ficar vazio" if normalized_name.empty?
 
-    def initialize(name)
-      @name = name
-      @board = nil
-      @score = 0
-    end
+    @name = normalized_name
+    @board = nil
+    @score = 0
   end
 end
