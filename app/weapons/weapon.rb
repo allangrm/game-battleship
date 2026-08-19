@@ -1,23 +1,18 @@
 # frozen_string_literal: true
 
-# Classe abstrata, define o contrato geralpara todas a s armas do jogo
+# Contrato comum para todas as armas. Cada arma calcula as coordenadas-alvo;
+# a alteração do estado pertence ao Board.
 #
 # @author Júlio Pedro
-# @version 1.0
-# @since 07-08-2026
+# @version 1.1
 class Weapon
-  # row e col são as coordenadas clicadas
-  # Board é o tabuleiro da partida 
-  # Retorna uma lista de coordenadas [[row, col], ...] candidatas, já filtradas para dentro do tabuleiro.
-  def target_cells(row, col, board, **opts)
-    raise NotImplementedError, '{#self.class} PRECISA IMPLEMENTAR #target_cells'
+  def target_cells(row, col, board, **_opts)
+    raise NotImplementedError, "#{self.class} precisa implementar #target_cells"
   end
 
-  private 
+  private
 
-  # validação de coordenadas para as armas de área.
   def valid_cells(coordinates, board)
-    coordinates.select { |(row, col)| board.valid_coordinate?(row, col)}
+    coordinates.select { |target_row, target_col| board.valid_coordinate?(target_row, target_col) }
   end
-
 end
