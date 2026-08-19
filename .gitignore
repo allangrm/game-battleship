@@ -75,3 +75,9 @@ Desktop.ini
 .env.*
 !.env.example
 /text
+
+# Local SQLite databases (schema.sql remains versioned).
+/database/*.sqlite3
+/database/*.sqlite3-*
+/database/*.db
+/database/*.db-*
