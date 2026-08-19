@@ -74,3 +74,4 @@ Desktop.ini
 .env
 .env.*
 !.env.example
+/text
