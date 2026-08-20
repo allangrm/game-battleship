@@ -1,6 +1,6 @@
 # Divisão Atualizada do Projeto
 
-Este documento consolida a divisão revisada entre quatro pessoas e atribui os itens compartilhados que estavam implícitos ou sem responsável. A referência de escopo é `Requisitos_do_Projeto_-_Etapa_2.md`.
+Este documento consolida a divisão revisada entre quatro pessoas e atribui os itens compartilhados que estavam implícitos ou sem responsável. A referência de escopo é `Requisitos_do_Projeto.md`.
 
 Prazo informado: **21 de agosto de 2026**.
 
