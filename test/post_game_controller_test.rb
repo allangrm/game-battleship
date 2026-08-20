@@ -33,7 +33,6 @@ class PostGameControllerTest < Minitest::Test
     assert_same game, @window.options[:game]
     assert_same player, @window.options[:player]
     assert_equal "Lívia", player.name
-    assert_same game.player_board, player.board
   end
 
   def test_defeat_goes_directly_to_game_over_without_player

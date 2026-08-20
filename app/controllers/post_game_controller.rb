@@ -7,7 +7,7 @@ require_relative "../models/player"
 # pós-partida. O nome é solicitado somente quando o jogador humano vence.
 #
 # @author Lívia Ferreira
-# @version 1.0
+# @version 1.1
 class PostGameController
   def initialize(window)
     @window = window
@@ -32,7 +32,6 @@ class PostGameController
     raise ArgumentError, "O nome só é solicitado em uma vitória" unless game.victory?
 
     player = Player.new(name)
-    player.board = game.player_board
     @window.navigate_to(:game_over, game: game, player: player)
     player
   end
