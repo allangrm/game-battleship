@@ -10,7 +10,7 @@ class GameView
   BACKGROUND_FILES = {
     poca: "mapa_poca.jpeg",
     lago: "mapa_lago.png",
-    oceano: "fundo_jogo.png"
+    oceano: "mapa_oceano.png"
   }.freeze
 
   BACK_X = 23

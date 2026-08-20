@@ -6,6 +6,7 @@ require_relative "../controllers/setup_controller"
 require_relative "../controllers/post_game_controller"
 
 require_relative "menu_view"
+require_relative "options_menu_view"
 require_relative "ranking_view"
 require_relative "game_view"
 require_relative "setup_view"
@@ -64,6 +65,8 @@ class MainWindow < Gosu::Window
       MenuView.new(self, @menu_controller)
     when :map_menu
       MenuView.new(self, @menu_controller, screen: :map_menu)
+    when :options_menu
+      OptionsMenuView.new(self)
     when :setup
       setup_controller = SetupController.new(self, map_type: options.fetch(:map_type))
       SetupView.new(self, setup_controller)
