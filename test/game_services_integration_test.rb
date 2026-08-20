@@ -10,6 +10,9 @@ class GameServicesIntegrationTest < Minitest::Test
     MapConfig.available_maps.each_with_index do |map_type, map_index|
       strategies.each_with_index do |strategy_class, strategy_index|
         game = build_game(map_type, map_index, strategy_class, strategy_index)
+        assert_equal map_type, game.map_type
+        refute_same game.player_inventory, game.computer_inventory
+        assert_equal game.player_inventory.to_h, game.computer_inventory.to_h
         play_until_finished(game)
         assert_unique_coordinates_per_actor(game)
 
@@ -45,6 +48,7 @@ class GameServicesIntegrationTest < Minitest::Test
     Game.new(
       player_board: player_board,
       enemy_board: enemy_board,
+      map_type: map_type,
       turn_strategy: strategy_class.new,
       ai: RandomAI.new(random: Random.new(300 + strategy_index))
     )
