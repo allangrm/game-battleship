@@ -85,7 +85,10 @@ class MainWindow < Gosu::Window
       GameOverView.new(
         self,
         game: options.fetch(:game),
-        player: options[:player]
+        player: options[:player],
+        score: options.fetch(:score),
+        saved_match_id: options[:saved_match_id],
+        persistence_error: options[:persistence_error]
       )
     when :ranking
       RankingView.new(self, map_type: options[:map_type])

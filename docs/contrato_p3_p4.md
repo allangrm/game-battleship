@@ -37,10 +37,17 @@ Após o nome válido, a rota `:game_over` recebe:
   `duration_seconds` disponíveis;
 - `player`: instância validada de `Player` na vitória, ou `nil` na derrota.
 
-O construtor estável para a tela da Pessoa 4 é:
+O construtor da tela final recebe os dados processados pelo controller:
 
 ```ruby
-GameOverView.new(window, game: game, player: player)
+GameOverView.new(
+  window,
+  game: game,
+  player: player,
+  score: score,
+  saved_match_id: saved_match_id,
+  persistence_error: persistence_error
+)
 ```
 
 Depois de exibir o nome do vencedor e a duração, o botão Voltar e a tecla
@@ -48,12 +55,16 @@ Depois de exibir o nome do vencedor e a duração, o botão Voltar e a tecla
 
 ## Responsabilidades da Pessoa 4
 
-A Pessoa 4 pode completar `GameOverView` sem alterar o fluxo anterior:
+A integração atual do pós-jogo executa:
 
 1. calcular `ScoreCalculator.calculate(**game.final_statistics)`;
 2. persistir a vitória usando `Database#save_match` e `player.name`;
 3. exibir resultado, pontuação e duração;
-4. navegar para `:ranking`, preferencialmente passando `map_type: game.map_type`.
+4. informar na tela se a gravação falhar, sem perder a pontuação calculada;
+5. navegar para `:ranking`, passando `map_type: game.map_type`.
+
+ Derrotas recebem pontuação para exibição, mas não são gravadas,
+pois o fluxo acordado não solicita nome ao jogador nesse caso.
 
 `RankingView` já aceita `map_type:` opcional no construtor. A Pessoa 4 continua
 responsável por consultar o banco, filtrar o mapa e desenhar a listagem. A

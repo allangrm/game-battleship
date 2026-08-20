@@ -2,12 +2,9 @@
 
 require_relative "../game"
 require_relative "../models/player"
+require_relative "../services/database"
+require_relative "../services/score_calculator"
 
-# Define o contrato de navegação entre o fim da GameView e as telas de
-# pós-partida. O nome é solicitado somente quando o jogador humano vence.
-#
-# @author Lívia Ferreira
-# @version 1.1
 class PostGameController
   def initialize(window)
     @window = window
@@ -23,7 +20,7 @@ class PostGameController
         on_submit: ->(name) { register_winner(game, name) }
       )
     else
-      @window.navigate_to(:game_over, game: game, player: nil)
+      show_game_over(game, nil)
     end
   end
 
@@ -32,11 +29,41 @@ class PostGameController
     raise ArgumentError, "O nome só é solicitado em uma vitória" unless game.victory?
 
     player = Player.new(name)
-    @window.navigate_to(:game_over, game: game, player: player)
+    show_game_over(game, player)
     player
   end
 
   private
+
+  def show_game_over(game, player)
+    score = ScoreCalculator.calculate(**game.final_statistics)
+    player.score = score if player
+
+    saved_match_id = save_victory(game, player, score) if player
+
+    @window.navigate_to(
+      :game_over,
+      game: game,
+      player: player,
+      score: score,
+      saved_match_id: saved_match_id,
+      persistence_error: nil
+    )
+  end
+
+  def save_victory(game, player, score)
+    database = Database.new
+
+    database.save_match(
+      player_name: player.name,
+      map_type: game.map_type,
+      result: game.result,
+      score: score,
+      duration_seconds: game.duration_seconds
+    )
+  ensure
+    database&.close
+  end
 
   def validate_finished_game!(game)
     raise ArgumentError, "game precisa ser um Game" unless game.is_a?(Game)

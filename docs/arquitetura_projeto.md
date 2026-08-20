@@ -104,7 +104,9 @@ flowchart TD
     Database --> SQLite[(SQLite3)]
 ```
 
-As setas tracejadas representam a integração de pós-partida que ainda deve ser conectada pela interface.
+As setas tracejadas representam o fluxo de pós-partida conectado pelo
+`PostGameController`: ele calcula a pontuação e persiste vitórias identificadas
+antes de entregar os dados à `GameOverView`.
 
 ## 6. Fluxo MVC
 
@@ -134,7 +136,7 @@ Regras de dependência:
 | Classe | Responsabilidade | Estado atual |
 |---|---|---|
 | `Game` | Dois tabuleiros, turno, IA, inventários, histórico, duração e fim da partida | Implementado e testado |
-| `Player` | Nome normalizado e pontuação atual | Model implementado; entrada visual pendente |
+| `Player` | Nome normalizado e pontuação atual | Model e entrada visual implementados |
 | `MapConfig` | Configuração de Poça, Lago e Oceano e criação de tabuleiro/frota | Implementado e testado |
 | `Board` | Matriz 2D, posicionamento e resolução de ataques | Implementado e testado |
 | `Ship` | Células ocupadas, hits, integridade e afundamento | Implementado e testado |
@@ -218,7 +220,7 @@ As três estratégias evitam coordenadas repetidas e consultam apenas informaç�
 | `NameView` | Capturar e validar o nome do vencedor após a partida | Implementada |
 | `SetupView` | Selecionar modo de turno e realizar posicionamento manual/automático | Implementada |
 | `InstructionsView` | Exibir as regras e controles | Pendente |
-| `GameOverView` | Receber `Game`/`Player` e exibir a base do resultado | Contrato integrado; pontuação e persistência pendentes com P4 |
+| `GameOverView` | Exibir resultado, pontuação, duração e situação da persistência | Implementada e integrada ao pós-jogo |
 | `RankingView` | Fundo, retorno e contexto opcional do mapa | Shell de P3 implementado; consulta/listagem pendente com P4 |
 
 ### Fluxo atualmente executável na interface
@@ -235,7 +237,7 @@ O setup permite escolher as duas estratégias de turno. A frota humana pode ser 
 
 - O botão visual de Instruções ainda não possui asset nem é desenhado na capa.
 - Não existem controles de arma ou orientação do avião.
-- A transição de encerramento existe, mas P4 ainda deve calcular/exibir a pontuação, persistir a vitória e listar o ranking.
+- A pontuação e a persistência da vitória estão integradas; a listagem do ranking ainda está pendente.
 
 ## 12. Setup da partida
 
@@ -349,7 +351,7 @@ A descrição detalhada permanece em [divisao.md](./divisao.md).
 | P1 - Allan | Models, mapas, posicionamento, pontuação, banco e bootstrap | Componentes próprios concluídos e testados |
 | P2 | `Game`, regras, turnos, IA, armas e controllers de partida | Núcleo lógico concluído e testado |
 | P3 | Menu, nome, mapa, setup, posicionamento por clique e navegação | Fluxo principal e contrato com P4 implementados; Instruções pendente |
-| P4 | Partida visual, pós-partida, ranking e integração final | Ataque básico integrado; armas especiais, resultado persistido e ranking pendentes |
+| P4 | Partida visual, pós-partida, ranking e integração final | Pós-jogo e persistência integrados; armas especiais e ranking pendentes |
 
 ### Contratos entre as frentes
 
@@ -379,8 +381,8 @@ A descrição detalhada permanece em [divisao.md](./divisao.md).
 
 Em 20 de agosto de 2026, a suíte automatizada possui:
 
-- 91 testes;
-- 398 asserções;
+- 94 testes;
+- 422 asserções;
 - nenhuma falha, erro ou teste ignorado;
 - execução aprovada com warnings do Ruby habilitados.
 
@@ -398,6 +400,7 @@ A cobertura automatizada inclui:
 - controller de partida;
 - cálculo de pontuação;
 - persistência, reabertura e ranking por mapa;
+- integração do pós-jogo com cálculo de pontuação e persistência de vitórias;
 - integração lógica de todos os mapas e modos de turno.
 
 Testes manuais de interface ainda são necessários, pois a suíte atual não substitui a validação visual do Gosu.
@@ -409,11 +412,10 @@ Ordem recomendada para concluir o escopo obrigatório:
 1. Adicionar a arte e o botão visual de Instruções ao menu.
 2. Exibir claramente o turno atual na `GameView`.
 3. Adicionar seleção de armas e opções direcionais.
-4. Completar `GameOverView` com pontuação e gravação da vitória.
-5. Completar `RankingView` com consulta e filtro por mapa.
-6. Criar `InstructionsView`.
-7. Completar README e realizar testes manuais nos três mapas.
-8. Ensaiar o fluxo Menu -> Setup -> Jogo -> Nome do vencedor -> Resultado -> Ranking.
+4. Completar `RankingView` com consulta e filtro por mapa.
+5. Criar `InstructionsView`.
+6. Completar README e realizar testes manuais nos três mapas.
+7. Ensaiar o fluxo Menu -> Setup -> Jogo -> Nome do vencedor -> Resultado -> Ranking.
 
 Somente depois devem ser considerados sons, tremor de tela, histórico lateral, animações e reorganização dos assets.
 
