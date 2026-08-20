@@ -7,6 +7,9 @@ require_relative "weapons/weapon_inventory"
 
 # Mantém o estado e as regras de uma partida entre jogador e computador.
 # Toda alteração de Cell/Ship continua delegada ao Board via AttackHandler.
+#
+# @author Júlio Pedro
+# @version 1.1
 class Game
   class InvalidTurnError < StandardError; end
   class GameFinishedError < StandardError; end

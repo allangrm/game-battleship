@@ -4,6 +4,9 @@ require_relative "weapon"
 
 # Torpedo direcional que atinge até três células consecutivas a partir da
 # coordenada escolhida. Células que ultrapassam a borda são descartadas.
+# 
+# @author Júlio Pedro
+# @version 1.1
 class Torpedo < Weapon
   DIRECTIONS = {
     up: [-1, 0],

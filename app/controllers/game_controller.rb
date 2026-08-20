@@ -6,6 +6,9 @@ require_relative "../weapons/basic_shot"
 # Ponto de integração entre a GameView e as regras da partida. Cada chamada
 # devolve uma sequência de eventos: a ação humana e, quando aplicável, as ações
 # automáticas do computador até o turno voltar ao jogador ou o jogo terminar.
+# #
+# @author Júlio Pedro
+# @version 1.1
 class GameController
   attr_reader :game
 

@@ -4,6 +4,9 @@ require_relative "../weapons/basic_shot"
 
 # Oponente simples que escolhe aleatoriamente uma célula ainda não atacada.
 # O Board permanece como fonte de verdade do histórico de coordenadas.
+# 
+# @author Júlio Pedro
+# @version 1.1
 class RandomAI
   class NoAvailableCoordinateError < StandardError; end
 
@@ -13,7 +16,7 @@ class RandomAI
     @random = random
   end
 
-  def choose_attack(board, inventory: nil)
+  def choose_attack(board)
     available_cells = board.grid.flatten.reject(&:attacked?)
     raise NoAvailableCoordinateError, "Não existem coordenadas disponíveis" if available_cells.empty?
 

@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 # Recebe as ações do menu e solicita a navegação à janela principal.
+# 
+# @author Júlio Pedro
+# @version 1.1
 class MenuController
   def initialize(window)
     @window = window
