@@ -4,11 +4,16 @@ require "gosu"
 
 # Preserva o fluxo visual do protótipo: capa com Play, seleção de mapa e mapa
 # escolhido. A classe apenas separa essa interface da janela principal.
+#
+# @author Lívia Ferreira
+# @version 1.0
 class MenuView
   ASSET_PATH = File.expand_path("../models/images", __dir__)
 
   PLAY_X = 365
   PLAY_Y = 347
+  RANKING_X = 920
+  RANKING_Y = 490
   BACK_X = 23
   BACK_Y = 30
   MAP_BUTTON_Y = 344
@@ -18,6 +23,9 @@ class MenuView
     lago: 608,
     oceano: 851
   }.freeze
+
+  HOVER_SCALE = 1.03
+  HOVER_COLOR = Gosu::Color.rgba(255, 255, 190, 150)
 
   def initialize(window, controller, screen: :cover)
     unless %i[cover map_menu playing].include?(screen)
@@ -55,7 +63,7 @@ class MenuView
 
     case @screen
     when :cover
-      open_map_menu if clicked_image?(@play_button, mouse_x, mouse_y)
+      handle_cover_click(mouse_x, mouse_y)
     when :map_menu
       handle_map_menu_click(mouse_x, mouse_y)
     when :playing
@@ -69,6 +77,7 @@ class MenuView
     @cover_background = load_image("fundo_play.png")
     @menu_background = load_image("fundo_menu.png")
     @play_image = load_image("play.png")
+    @ranking_image = load_image("botao_ranking.png")
     @back_image = load_image("botao_voltar_play.png")
 
     @map_button_images = {
@@ -84,7 +93,6 @@ class MenuView
 
     # Estes assets ainda não existem. As rotas correspondentes já permanecem
     # no MenuController, mas seus botões não são desenhados por enquanto.
-    # @ranking_image = load_image("botao_ranking.png")
     # @instructions_image = load_image("botao_instrucoes.png")
     # @exit_image = load_image("botao_sair.png")
 
@@ -93,6 +101,7 @@ class MenuView
 
   def configure_buttons
     @play_button = image_button(@play_image, PLAY_X, PLAY_Y)
+    @ranking_button = image_button(@ranking_image, RANKING_X, RANKING_Y)
     @back_button = image_button(@back_image, BACK_X, BACK_Y)
 
     @map_buttons = MAP_BUTTON_X.to_h do |map_name, x|
@@ -103,6 +112,7 @@ class MenuView
   def draw_cover
     @cover_background.draw(0, 0, 0)
     draw_image_button(@play_button)
+    draw_image_button(@ranking_button)
   end
 
   def draw_map_menu
@@ -150,6 +160,14 @@ class MenuView
     select_map(selected_map.first) if selected_map
   end
 
+  def handle_cover_click(mouse_x, mouse_y)
+    if clicked_image?(@play_button, mouse_x, mouse_y)
+      open_map_menu
+    elsif clicked_image?(@ranking_button, mouse_x, mouse_y)
+      @controller.handle(:show_ranking)
+    end
+  end
+
   def handle_map_click(mouse_x, mouse_y)
     if clicked_image?(@back_button, mouse_x, mouse_y)
       open_map_menu
@@ -194,6 +212,27 @@ class MenuView
 
   def draw_image_button(button)
     button[:image].draw(button[:x], button[:y], 1)
+    draw_button_glow(button) if hovered?(button)
+  end
+
+  def draw_button_glow(button)
+    image = button[:image]
+    offset_x = image.width * (HOVER_SCALE - 1) / 2
+    offset_y = image.height * (HOVER_SCALE - 1) / 2
+
+    image.draw(
+      button[:x] - offset_x,
+      button[:y] - offset_y,
+      2,
+      HOVER_SCALE,
+      HOVER_SCALE,
+      HOVER_COLOR,
+      :additive
+    )
+  end
+
+  def hovered?(button)
+    clicked_image?(button, @window.mouse_x, @window.mouse_y)
   end
 
   def clicked_image?(button, mouse_x, mouse_y)
