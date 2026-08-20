@@ -3,6 +3,7 @@
 require_relative "controllers/attack_handler"
 require_relative "turn_strategies/single_shot"
 require_relative "ai/random_ai"
+require_relative "weapons/weapon_inventory"
 
 # Mantém o estado e as regras de uma partida entre jogador e computador.
 # Toda alteração de Cell/Ship continua delegada ao Board via AttackHandler.
@@ -23,6 +24,7 @@ class Game
   AttackEvent = Struct.new(
     :actor,
     :weapon,
+    :remaining_uses,
     :cells,
     :turn_before,
     :turn_after,
@@ -41,13 +43,17 @@ class Game
   end
 
   attr_reader :player_board, :enemy_board, :current_turn, :state,
-              :started_at, :ended_at, :turn_strategy
+              :started_at, :ended_at, :turn_strategy, :map_type,
+              :player_inventory, :computer_inventory
 
   def initialize(
     player_board:,
     enemy_board:,
+    map_type:,
     turn_strategy: SingleShotTurnStrategy.new,
     ai: RandomAI.new,
+    player_inventory: nil,
+    computer_inventory: nil,
     first_turn: :player,
     clock: nil
   )
@@ -55,6 +61,16 @@ class Game
     validate_board!(:enemy_board, enemy_board)
     raise ArgumentError, "Os tabuleiros precisam ser objetos diferentes" if player_board.equal?(enemy_board)
     raise ArgumentError, "Os tabuleiros precisam ter o mesmo tamanho" unless player_board.size == enemy_board.size
+
+    default_player_inventory = WeaponInventory.for_map(map_type)
+    @map_type = default_player_inventory.map_type
+    @player_inventory = player_inventory || default_player_inventory
+    @computer_inventory = computer_inventory || WeaponInventory.for_map(@map_type)
+    validate_inventory!(:player_inventory, @player_inventory)
+    validate_inventory!(:computer_inventory, @computer_inventory)
+    if @player_inventory.equal?(@computer_inventory)
+      raise ArgumentError, "Jogador e computador precisam de inventários independentes"
+    end
 
     validate_collaborator!(:turn_strategy, turn_strategy, :keep_turn?)
     validate_collaborator!(:ai, ai, :choose_attack)
@@ -87,7 +103,7 @@ class Game
 
   def computer_attack
     ensure_can_attack!(:computer)
-    decision = @ai.choose_attack(player_board)
+    decision = @ai.choose_attack(player_board, inventory: computer_inventory)
 
     perform_attack(
       actor: :computer,
@@ -133,6 +149,13 @@ class Game
     @history.dup.freeze
   end
 
+  def inventory_for(actor)
+    return player_inventory if actor == :player
+    return computer_inventory if actor == :computer
+
+    raise ArgumentError, "Ator inválido: #{actor.inspect}"
+  end
+
   def duration_seconds
     reference_time = ended_at || @clock.call
     [(reference_time - started_at).floor, 0].max
@@ -154,8 +177,15 @@ class Game
 
   def perform_attack(actor:, target_board:, row:, col:, weapon:, options:)
     ensure_can_attack!(actor)
+    inventory = inventory_for(actor)
+    unless inventory.available?(weapon)
+      raise WeaponInventory::WeaponUnavailableError,
+            "A arma #{weapon.identifier} não possui cargas restantes"
+    end
+
     turn_before = current_turn
     attack_results = AttackHandler.new(target_board).attack(row, col, weapon, **options)
+    remaining_uses = inventory.consume!(weapon)
     cell_results = snapshot_results(attack_results)
 
     update_final_state!(actor, target_board)
@@ -165,6 +195,7 @@ class Game
     event = AttackEvent.new(
       actor: actor,
       weapon: weapon.identifier,
+      remaining_uses: remaining_uses,
       cells: cell_results,
       turn_before: turn_before,
       turn_after: current_turn,
@@ -214,5 +245,14 @@ class Game
     return if collaborator.respond_to?(method_name)
 
     raise ArgumentError, "#{name} precisa responder a ##{method_name}"
+  end
+
+  def validate_inventory!(name, inventory)
+    unless inventory.is_a?(WeaponInventory)
+      raise ArgumentError, "#{name} precisa ser um WeaponInventory"
+    end
+    return if inventory.map_type.nil? || inventory.map_type == map_type
+
+    raise ArgumentError, "#{name} pertence ao mapa #{inventory.map_type}, não a #{map_type}"
   end
 end

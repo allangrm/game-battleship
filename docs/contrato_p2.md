@@ -12,6 +12,7 @@ turn_strategy = TurnStrategyFactory.build(:extra_shot_on_hit)
 game = Game.new(
   player_board: player_board,
   enemy_board: enemy_board,
+  map_type: map_config.map_type,
   turn_strategy: turn_strategy
 )
 
@@ -38,11 +39,34 @@ Armas e opções:
 ```ruby
 controller.handle_player_attack(row, col) # BasicShot por padrão
 controller.handle_player_attack(row, col, Missile.new)
+controller.handle_player_attack(row, col, Torpedo.new, direction: :right)
 controller.handle_player_attack(row, col, Airplane.new, orientation: :row)
 controller.handle_player_attack(row, col, Airplane.new, orientation: :col)
 ```
 
 No Míssil, a coordenada escolhida é o canto superior esquerdo do bloco 2x2. A origem já atacada invalida a ação. Outras células já atacadas dentro da área são ignoradas.
+
+O Torpedo começa na coordenada escolhida e atinge até três células consecutivas. As direções aceitas são `:up`, `:down`, `:left` e `:right`; células além da borda são descartadas.
+
+## Inventários e limites
+
+Jogador e computador recebem inventários separados com as mesmas cargas. O ataque básico é ilimitado.
+
+| Mapa | Míssil | Torpedo | Avião |
+| --- | ---: | ---: | ---: |
+| Poça | 1 | 1 | 1 |
+| Lago | 2 | 2 | 1 |
+| Oceano | 3 | 3 | 1 |
+
+Uma carga é consumida somente depois que o ataque passa pelas validações. Coordenada inválida ou origem repetida não consome a arma.
+
+```ruby
+game.player_inventory.remaining(:missile)
+game.computer_inventory.available?(:torpedo)
+game.player_inventory.to_h
+```
+
+A política atual de `RandomAI` ainda escolhe apenas `BasicShot`, mas já recebe seu inventário ao decidir uma ação. Isso permite adicionar a escolha de armas especiais sem alterar o contrato do `Game`.
 
 ## Evento de ataque
 
@@ -51,7 +75,8 @@ Cada `Game::AttackEvent` expõe:
 | Campo | Conteúdo |
 | --- | --- |
 | `actor` | `:player` ou `:computer` |
-| `weapon` | `:basic_shot`, `:missile` ou `:airplane` |
+| `weapon` | `:basic_shot`, `:missile`, `:torpedo` ou `:airplane` |
+| `remaining_uses` | Cargas restantes após a ação; `nil` para ataque básico |
 | `cells` | Array congelado de resultados por coordenada |
 | `turn_before` | Ator que iniciou a ação |
 | `turn_after` | Ator que poderá realizar a próxima ação |
@@ -81,7 +106,7 @@ score = ScoreCalculator.calculate(**game.final_statistics)
 
 database.save_match(
   player_name: player.name,
-  map_type: map_config.map_type,
+  map_type: game.map_type,
   result: game.result,
   score: score,
   duration_seconds: game.duration_seconds
@@ -95,4 +120,5 @@ database.save_match(
 - `InvalidAttackError`: coordenada inválida ou origem já atacada;
 - `Game::InvalidTurnError`: ação solicitada para o ator errado;
 - `Game::GameFinishedError`: tentativa de atacar depois do encerramento;
+- `WeaponInventory::WeaponUnavailableError`: tentativa de usar uma arma sem cargas;
 - `ArgumentError`: arma/orientação/modo de turno inválido ou setup inconsistente.
