@@ -9,37 +9,6 @@ jogo recria uma Batalha Naval entre uma pessoa e o computador, com três mapas,
 posicionamento de frota, diferentes modos de turno, armas especiais, níveis de
 IA e persistência de pontuações em SQLite.
 
-## 🧭 Estado atual
-
-O fluxo principal já permite selecionar um mapa, posicionar a frota e disputar
-uma partida completa utilizando o ataque básico. A lógica das armas especiais,
-pontuação e ranking também está pronta no backend; parte dessa funcionalidade
-ainda precisa ser conectada à interface.
-
-### Implementado
-
-- Menu visual com Play, Menu, Ranking e Sair.
-- Mapas **Poça**, **Lago** e **Oceano**.
-- Posicionamento manual horizontal ou vertical.
-- Posicionamento automático e reinício da frota.
-- Dois modos de turno.
-- Ataques, validação de repetição, acerto, água e afundamento.
-- Vitória, derrota e duração da partida.
-- Nome do vencedor solicitado ao final da partida.
-- Três dificuldades de IA selecionadas automaticamente pelo mapa.
-- Tiro básico, Míssil 2x2 e Avião em linha ou coluna no backend.
-- Pontuação, SQLite e consulta de ranking no backend.
-- Testes automatizados das principais regras de negócio.
-
-### Integrações pendentes
-
-- Exibir e selecionar Míssil e Avião na interface do jogador.
-- Mostrar as cargas restantes das armas.
-- Exibir claramente o turno atual durante a batalha.
-- Calcular e salvar a pontuação pela tela final.
-- Consultar e desenhar os registros na tela de ranking.
-- Preencher o menu secundário com as instruções completas.
-- Registrar o checklist manual ponta a ponta.
 
 ## 🎮 Fluxo do jogo
 
@@ -203,16 +172,6 @@ frota e duração:
 O resultado mínimo é zero. No ranking, pontuações maiores aparecem primeiro e
 o menor tempo é utilizado como critério de desempate.
 
-## 👥 Divisão da equipe
-
-| Frente | Responsabilidade |
-|---|---|
-| Pessoa 1 | Models, mapas, pontuação, SQLite e bootstrap |
-| Pessoa 2 | Game, regras, turnos, IA e armas |
-| Pessoa 3 | Menu, setup, nome e navegação |
-| Pessoa 4 | Partida visual, pós-partida, ranking e integração final |
-
-A divisão detalhada está em [`docs/divisao.md`](docs/divisao.md).
 
 ## 📚 Documentação
 
