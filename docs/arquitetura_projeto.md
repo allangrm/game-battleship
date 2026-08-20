@@ -208,43 +208,43 @@ As três estratégias evitam coordenadas repetidas e consultam apenas informaç�
 | View | Responsabilidade | Estado atual |
 |---|---|---|
 | `MainWindow` | Manter a view ativa e delegar `draw`, `update` e `button_down` | Implementada |
-| `MenuView` | Capa, botão de início e seleção dos três mapas | Parcialmente implementada |
-| `GameView` | Desenhar tabuleiros e converter clique inimigo em coordenada | Parcialmente implementada |
+| `MenuView` | Capa, início, ranking, sair e seleção dos três mapas | Implementada, exceto botão visual de instruções |
+| `GameView` | Desenhar tabuleiros, atacar e emitir encerramento | Implementada parcialmente; armas especiais ainda precisam de controles |
 | `PlaceholderView` | Substituição temporária para rotas ainda não concluídas | Implementada como apoio temporário |
-| `NameView` | Capturar e validar o nome do jogador | Pendente |
-| `SetupView` | Selecionar modo de turno e realizar posicionamento manual/automático | Pendente |
+| `NameView` | Capturar e validar o nome do vencedor após a partida | Implementada |
+| `SetupView` | Selecionar modo de turno e realizar posicionamento manual/automático | Implementada |
 | `InstructionsView` | Exibir as regras e controles | Pendente |
-| `GameOverView` | Exibir resultado, pontuação e duração e salvar a partida | Pendente |
-| `RankingView` | Consultar e exibir ranking por mapa | Pendente |
+| `GameOverView` | Receber `Game`/`Player` e exibir a base do resultado | Contrato integrado; pontuação e persistência pendentes com P4 |
+| `RankingView` | Fundo, retorno e contexto opcional do mapa | Shell de P3 implementado; consulta/listagem pendente com P4 |
 
 ### Fluxo atualmente executável na interface
 
 ```text
-Capa -> seleção de mapa -> criação automática dos dois tabuleiros -> GameView
+Capa -> seleção de mapa -> Setup manual/automático -> GameView
+     -> vitória: NameView -> GameOverView -> seleção de mapa
+     -> derrota: GameOverView -> seleção de mapa
 ```
 
-O modo de turno atual usa `SingleShotTurnStrategy` por padrão. Os tabuleiros são posicionados automaticamente ao abrir a partida.
+O setup permite escolher as duas estratégias de turno. A frota humana pode ser posicionada por clique ou automaticamente; a frota inimiga é sempre automática.
 
 ### Limitações atuais da interface
 
-- Os botões de Ranking, Instruções e Sair ainda não são desenhados na capa.
-- Nome do jogador, modo de turno e posicionamento manual não são coletados.
-- `GameView` apenas seleciona e destaca a célula inimiga; ainda não chama `GameController#handle_player_attack`.
-- Estados de água, acerto e afundamento ainda não são desenhados.
+- O botão visual de Instruções ainda não possui asset nem é desenhado na capa.
 - Não existem controles de arma ou orientação do avião.
-- Não existe transição para resultado, gravação ou ranking.
+- A transição de encerramento existe, mas P4 ainda deve calcular/exibir a pontuação, persistir a vitória e listar o ranking.
 
 ## 12. Setup da partida
 
 O fluxo final deve ser:
 
-1. P3 coleta o nome do jogador.
-2. P3 coleta mapa e modo de turno.
-3. P3 permite posicionamento manual por clique, obrigatório no escopo, e oferece posicionamento automático como opção.
-4. `MapConfig` cria dois tabuleiros e duas frotas independentes.
-5. `TurnStrategyFactory` cria a estratégia selecionada.
-6. `Game` recebe tabuleiros, mapa e estratégia.
-7. `GameController` é criado e entregue à `GameView`.
+1. P3 coleta mapa e modo de turno.
+2. P3 permite posicionamento manual por clique, obrigatório no escopo, e oferece posicionamento automático como opção.
+3. `MapConfig` cria dois tabuleiros e duas frotas independentes.
+4. `TurnStrategyFactory` cria a estratégia selecionada.
+5. `Game` recebe tabuleiros, mapa e estratégia.
+6. `GameController` é criado e entregue à `GameView`.
+
+O nome não faz parte do setup: conforme a decisão do grupo, ele é solicitado ao vencedor humano somente depois do encerramento, em estilo fliperama.
 
 Exemplo de criação:
 
@@ -344,8 +344,8 @@ A descrição detalhada permanece em [divisao.md](./divisao.md).
 |---|---|---|
 | P1 - Allan | Models, mapas, posicionamento, pontuação, banco e bootstrap | Componentes próprios concluídos e testados |
 | P2 | `Game`, regras, turnos, IA, armas e controllers de partida | Núcleo lógico concluído e testado |
-| P3 | Menu, nome, mapa, setup, posicionamento por clique e navegação | Menu/mapa iniciados; setup completo pendente |
-| P4 | Partida visual, pós-partida, ranking e integração final | Tabuleiros desenhados; ataque visual e pós-partida pendentes |
+| P3 | Menu, nome, mapa, setup, posicionamento por clique e navegação | Fluxo principal e contrato com P4 implementados; Instruções pendente |
+| P4 | Partida visual, pós-partida, ranking e integração final | Ataque básico integrado; armas especiais, resultado persistido e ranking pendentes |
 
 ### Contratos entre as frentes
 
@@ -365,10 +365,11 @@ A descrição detalhada permanece em [divisao.md](./divisao.md).
 
 #### Setup
 
-1. P3 coleta nome, mapa, estratégia e posicionamento.
-2. P1 fornece `MapConfig`, `Board`, `Ship`, `Cell` e `Player`.
-3. P2 cria `Game` e `GameController`.
+1. P3 coleta mapa, estratégia e posicionamento.
+2. P1 fornece `MapConfig`, `Board`, `Ship` e `Cell`.
+3. `SetupController` monta `Game`/`GameController` com os componentes de P1 e P2.
 4. P3 navega para a `GameView` de P4.
+5. Após uma vitória, P3 coleta o nome e entrega `Player` e `Game` para a tela final de P4.
 
 ## 16. Testes e qualidade
 
@@ -399,18 +400,14 @@ Testes manuais de interface ainda são necessários, pois a suíte atual não su
 
 Ordem recomendada para concluir o escopo obrigatório:
 
-1. Completar Menu com Iniciar, Ranking, Instruções e Sair.
-2. Implementar entrada do nome.
-3. Implementar seleção do modo de turno.
-4. Implementar posicionamento manual por clique e botão automático.
-5. Conectar o clique da `GameView` ao `GameController`.
-6. Desenhar água, acerto, afundamento, turno e erros.
-7. Adicionar seleção de armas e opções direcionais.
-8. Criar `GameOverView` e integrar pontuação/gravação.
-9. Criar `RankingView` filtrada por mapa.
-10. Criar `InstructionsView`.
-11. Completar README e realizar testes manuais nos três mapas.
-12. Ensaiar o fluxo Menu -> Setup -> Jogo -> Resultado -> Ranking.
+1. Adicionar a arte e o botão visual de Instruções ao menu.
+2. Exibir claramente o turno atual na `GameView`.
+3. Adicionar seleção de armas e opções direcionais.
+4. Completar `GameOverView` com pontuação e gravação da vitória.
+5. Completar `RankingView` com consulta e filtro por mapa.
+6. Criar `InstructionsView`.
+7. Completar README e realizar testes manuais nos três mapas.
+8. Ensaiar o fluxo Menu -> Setup -> Jogo -> Nome do vencedor -> Resultado -> Ranking.
 
 Somente depois devem ser considerados sons, tremor de tela, histórico lateral, animações e reorganização dos assets.
 

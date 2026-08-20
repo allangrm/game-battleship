@@ -17,10 +17,16 @@ class GameView
   BACK_Y = 30
 
 
-  def initialize(window, controller, map_type:)
+  def initialize(window, controller, map_type:, on_game_over: nil)
+    if on_game_over && !on_game_over.respond_to?(:call)
+      raise ArgumentError, "on_game_over precisa responder a #call"
+    end
+
     @window = window
     @controller = controller
     @map_type = map_type
+    @on_game_over = on_game_over
+    @game_over_notified = false
 
     @background = load_background(map_type)
     @back_image = Gosu::Image.new(
@@ -149,6 +155,8 @@ class GameView
     events.each do |event|
       print_attack_event(event)
     end
+
+    notify_game_over(events)
   rescue InvalidAttackError,
     Game::InvalidTurnError,
     Game::GameFinishedError,
@@ -193,6 +201,16 @@ class GameView
 
     puts "Fim de jogo: #{result}"
     @message_box.add("Fim de jogo: #{result}")
+  end
+
+  # Ponto de integração com a navegação de P3 e as telas finais de P4. A view
+  # apenas informa o encerramento; não cria Player, não calcula nem persiste.
+  def notify_game_over(events)
+    return if @game_over_notified
+    return unless events.any?(&:game_over?)
+
+    @game_over_notified = true
+    @on_game_over&.call(@controller.game)
   end
 
   def formatted_coordinate(row, col)

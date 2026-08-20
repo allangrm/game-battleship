@@ -2,19 +2,22 @@
 
 require "gosu"
 require_relative "../controllers/menu_controller"
-require_relative "../controllers/game_controller"
-require_relative "../models/map_config"
+require_relative "../controllers/setup_controller"
+require_relative "../controllers/post_game_controller"
 
 require_relative "menu_view"
 require_relative "ranking_view"
 require_relative "game_view"
+require_relative "setup_view"
+require_relative "name_view"
+require_relative "game_over_view"
 require_relative "placeholder_view"
 
 # Janela principal do jogo. Mantém apenas a view ativa e delega a ela os
 # eventos do Gosu.
 #
 # @author Lívia Ferreira
-# @version 1.0
+# @version 1.1
 class MainWindow < Gosu::Window
   WIDTH = 1_408
   HEIGHT = 768
@@ -25,6 +28,7 @@ class MainWindow < Gosu::Window
     self.caption = TITLE
 
     @menu_controller = MenuController.new(self)
+    @post_game_controller = PostGameController.new(self)
     navigate_to(:menu)
   end
 
@@ -46,57 +50,50 @@ class MainWindow < Gosu::Window
 
   def navigate_to(screen, **options)
     self.caption = TITLE
+    next_view = build_view(screen, **options)
 
-    @active_view = case screen
-                   when :menu
-                     MenuView.new(self, @menu_controller)
-                   when :map_menu
-                     MenuView.new(self, @menu_controller, screen: :map_menu)
-                   when :game
-                     build_game_view(options.fetch(:map_type))
-                   when :name
-                     pending_view("Identificação do jogador", "A entrada do nome será implementada na etapa 3.")
-                   when :ranking
-                     RankingView.new(self)
-                   when :instructions
-                     pending_view("Instruções", "A tela completa de instruções será implementada depois do menu.")
-                   else
-                     raise ArgumentError, "Tela inválida: #{screen.inspect}"
-                   end
+    @active_view = next_view
+    self.text_input = next_view.respond_to?(:text_input) ? next_view.text_input : nil
   end
 
   private
 
-  def build_game_view(map_type)
-    map_config = MapConfig.new(map_type)
-
-    player_board = build_board(map_config)
-    enemy_board = build_board(map_config)
-
-    game = Game.new(
-      player_board: player_board,
-      enemy_board: enemy_board,
-      map_type: map_config.map_type
-    )
-
-    controller = GameController.new(game)
-
-    self.caption = "#{TITLE} - #{map_config.name}"
-
-    GameView.new(
-      self,
-      controller,
-      map_type: map_config.map_type
-    )
-  end
-
-  def build_board(map_config)
-    board = map_config.create_board
-    fleet = map_config.create_fleet
-
-    board.auto_place_ships(fleet)
-
-    board
+  def build_view(screen, **options)
+    case screen
+    when :menu
+      MenuView.new(self, @menu_controller)
+    when :map_menu
+      MenuView.new(self, @menu_controller, screen: :map_menu)
+    when :setup
+      setup_controller = SetupController.new(self, map_type: options.fetch(:map_type))
+      SetupView.new(self, setup_controller)
+    when :game
+      self.caption = "#{TITLE} - #{options.fetch(:map_name)}"
+      GameView.new(
+        self,
+        options.fetch(:game_controller),
+        map_type: options.fetch(:map_type),
+        on_game_over: @post_game_controller.method(:handle_game_over)
+      )
+    when :name
+      NameView.new(
+        self,
+        game: options.fetch(:game),
+        on_submit: options.fetch(:on_submit)
+      )
+    when :game_over
+      GameOverView.new(
+        self,
+        game: options.fetch(:game),
+        player: options[:player]
+      )
+    when :ranking
+      RankingView.new(self, map_type: options[:map_type])
+    when :instructions
+      pending_view("Instruções", "A tela completa de instruções será implementada depois do menu.")
+    else
+      raise ArgumentError, "Tela inválida: #{screen.inspect}"
+    end
   end
 
   def pending_view(title, message)

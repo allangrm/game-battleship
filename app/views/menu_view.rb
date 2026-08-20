@@ -2,11 +2,11 @@
 
 require "gosu"
 
-# Preserva o fluxo visual do protótipo: capa com Play, seleção de mapa e mapa
-# escolhido. A classe apenas separa essa interface da janela principal.
+# Preserva o fluxo visual do protótipo: capa com Play e seleção de mapa.
+# As ações são encaminhadas ao controller, sem montar a partida na view.
 #
 # @author Lívia Ferreira
-# @version 1.0
+# @version 1.1
 class MenuView
   ASSET_PATH = File.expand_path("../models/images", __dir__)
 
@@ -14,6 +14,8 @@ class MenuView
   PLAY_Y = 347
   RANKING_X = 920
   RANKING_Y = 490
+  EXIT_X = 1_270
+  EXIT_Y = 650
   BACK_X = 23
   BACK_Y = 30
   MAP_BUTTON_Y = 344
@@ -28,14 +30,13 @@ class MenuView
   HOVER_COLOR = Gosu::Color.rgba(255, 255, 190, 150)
 
   def initialize(window, controller, screen: :cover)
-    unless %i[cover map_menu playing].include?(screen)
+    unless %i[cover map_menu].include?(screen)
       raise ArgumentError, "Estado inicial inválido: #{screen.inspect}"
     end
 
     @window = window
     @controller = controller
     @screen = screen
-    @current_map = nil
     @menu_message = nil
 
     load_assets
@@ -48,8 +49,6 @@ class MenuView
       draw_cover
     when :map_menu
       draw_map_menu
-    when :playing
-      draw_selected_map
     end
   end
 
@@ -66,8 +65,6 @@ class MenuView
       handle_cover_click(mouse_x, mouse_y)
     when :map_menu
       handle_map_menu_click(mouse_x, mouse_y)
-    when :playing
-      handle_map_click(mouse_x, mouse_y)
     end
   end
 
@@ -78,6 +75,7 @@ class MenuView
     @menu_background = load_image("fundo_menu.png")
     @play_image = load_image("play.png")
     @ranking_image = load_image("botao_ranking.png")
+    @exit_image = load_image("botao_sair.png")
     @back_image = load_image("botao_voltar_play.png")
 
     @map_button_images = {
@@ -86,15 +84,9 @@ class MenuView
       oceano: load_image("botao_oceano.png")
     }
 
-    @maps = {
-      poca: load_image("mapa_poca.jpeg"),
-      lago: load_image("mapa_lago.png")
-    }
-
-    # Estes assets ainda não existem. As rotas correspondentes já permanecem
-    # no MenuController, mas seus botões não são desenhados por enquanto.
+    # Este asset ainda não existe. A rota correspondente permanece disponível
+    # no MenuController para ser conectada quando a arte for adicionada.
     # @instructions_image = load_image("botao_instrucoes.png")
-    # @exit_image = load_image("botao_sair.png")
 
     @message_font = Gosu::Font.new(24)
   end
@@ -102,6 +94,7 @@ class MenuView
   def configure_buttons
     @play_button = image_button(@play_image, PLAY_X, PLAY_Y)
     @ranking_button = image_button(@ranking_image, RANKING_X, RANKING_Y)
+    @exit_button = image_button(@exit_image, EXIT_X, EXIT_Y)
     @back_button = image_button(@back_image, BACK_X, BACK_Y)
 
     @map_buttons = MAP_BUTTON_X.to_h do |map_name, x|
@@ -113,6 +106,7 @@ class MenuView
     @cover_background.draw(0, 0, 0)
     draw_image_button(@play_button)
     draw_image_button(@ranking_button)
+    draw_image_button(@exit_button)
   end
 
   def draw_map_menu
@@ -120,15 +114,6 @@ class MenuView
     draw_image_button(@back_button)
     @map_buttons.each_value { |button| draw_image_button(button) }
     draw_menu_message
-  end
-
-  def draw_selected_map
-    map = @maps.fetch(@current_map)
-    scale_x = @window.width.to_f / map.width
-    scale_y = @window.height.to_f / map.height
-
-    map.draw(0, 0, 0, scale_x, scale_y)
-    draw_image_button(@back_button)
   end
 
   def draw_menu_message
@@ -162,31 +147,16 @@ class MenuView
 
   def handle_cover_click(mouse_x, mouse_y)
     if clicked_image?(@play_button, mouse_x, mouse_y)
-      open_map_menu
+      @controller.handle(:start_game)
     elsif clicked_image?(@ranking_button, mouse_x, mouse_y)
       @controller.handle(:show_ranking)
-    end
-  end
-
-  def handle_map_click(mouse_x, mouse_y)
-    if clicked_image?(@back_button, mouse_x, mouse_y)
-      open_map_menu
-    else
-      puts "Clique no tabuleiro: X=#{mouse_x.to_i}, Y=#{mouse_y.to_i}"
+    elsif clicked_image?(@exit_button, mouse_x, mouse_y)
+      @controller.handle(:exit)
     end
   end
 
   def select_map(map_name)
-    @window.navigate_to(
-      :game,
-      map_type: map_name
-    )
-  end
-
-  def open_map_menu
-    @screen = :map_menu
-    @menu_message = nil
-    @window.caption = MainWindow::TITLE
+    @controller.select_map(map_name)
   end
 
   def go_back
@@ -194,10 +164,7 @@ class MenuView
     when :cover
       return
     when :map_menu
-      @screen = :cover
-      @menu_message = nil
-    when :playing
-      open_map_menu
+      @window.navigate_to(:menu)
     end
   end
 

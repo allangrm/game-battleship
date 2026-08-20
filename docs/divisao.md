@@ -158,7 +158,7 @@ Responsável principal: **Allan**.
 
 ### Setup
 
-1. P3 coleta nome, mapa, modo de turno e posicionamento.
+1. P3 coleta mapa, modo de turno e posicionamento antes da partida; o nome é solicitado somente após uma vitória humana.
 2. P1 fornece mapa, frota e operações de `Board`.
 3. P2 cria o `Game` com os dois tabuleiros.
 4. P3 transfere a navegação para a `GameView` de P4.

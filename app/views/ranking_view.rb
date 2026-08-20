@@ -6,7 +6,7 @@ require "gosu"
 # por enquanto, a view cuida do fundo e da navegação de retorno.
 #
 # @author Lívia Ferreira
-# @version 1.0
+# @version 1.1
 class RankingView
   ASSET_PATH = File.expand_path("../models/images", __dir__)
   BACK_X = 23
@@ -14,8 +14,11 @@ class RankingView
   HOVER_SCALE = 1.03
   HOVER_COLOR = Gosu::Color.rgba(255, 255, 190, 150)
 
-  def initialize(window)
+  attr_reader :map_type
+
+  def initialize(window, map_type: nil)
     @window = window
+    @map_type = map_type&.to_sym
     @background = load_image("fundo_ranking.png")
     @back_image = load_image("botao_voltar_play.png")
     @back_button = { image: @back_image, x: BACK_X, y: BACK_Y }
