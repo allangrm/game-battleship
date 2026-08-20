@@ -16,7 +16,7 @@ class RandomAI
     @random = random
   end
 
-  def choose_attack(board)
+def choose_attack(board, inventory: nil)
     available_cells = board.grid.flatten.reject(&:attacked?)
     raise NoAvailableCoordinateError, "Não existem coordenadas disponíveis" if available_cells.empty?
 
