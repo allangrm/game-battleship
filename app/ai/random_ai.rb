@@ -4,7 +4,7 @@ require_relative "../weapons/basic_shot"
 
 # Oponente simples que escolhe aleatoriamente uma célula ainda não atacada.
 # O Board permanece como fonte de verdade do histórico de coordenadas.
-# 
+#
 # @author Júlio Pedro
 # @version 1.2
 class RandomAI

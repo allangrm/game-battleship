@@ -4,6 +4,9 @@ require "gosu"
 
 # Tela textual temporária usada apenas para que as rotas do menu já funcionem
 # antes da implementação das próximas views.
+#
+# @author Lívia Ferreira
+# @version 1.0
 class PlaceholderView
   ASSET_PATH = File.expand_path("../models/images", __dir__)
   BACK_X = 23

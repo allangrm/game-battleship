@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Contrato das estratégias que decidem se o atacante permanece com o turno.
-# 
+#
 # @author Júlio Pedro
 # @version 1.1
 class TurnStrategy

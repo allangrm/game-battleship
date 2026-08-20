@@ -2,7 +2,7 @@
 
 # Controla as cargas de armas de um participante. O ataque básico é ilimitado;
 # cada participante recebe uma instância própria com os mesmos limites do mapa.
-# 
+#
 # @author Júlio Pedro
 # @version 1.2
 class WeaponInventory

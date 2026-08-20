@@ -6,11 +6,15 @@ require_relative "../controllers/game_controller"
 require_relative "../models/map_config"
 
 require_relative "menu_view"
+require_relative "ranking_view"
 require_relative "game_view"
 require_relative "placeholder_view"
 
 # Janela principal do jogo. Mantém apenas a view ativa e delega a ela os
 # eventos do Gosu.
+#
+# @author Lívia Ferreira
+# @version 1.0
 class MainWindow < Gosu::Window
   WIDTH = 1_408
   HEIGHT = 768
@@ -53,7 +57,7 @@ class MainWindow < Gosu::Window
                    when :name
                      pending_view("Identificação do jogador", "A entrada do nome será implementada na etapa 3.")
                    when :ranking
-                     pending_view("Ranking", "A tela de ranking será integrada pela Pessoa 4.")
+                     RankingView.new(self)
                    when :instructions
                      pending_view("Instruções", "A tela completa de instruções será implementada depois do menu.")
                    else
