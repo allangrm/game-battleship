@@ -29,4 +29,10 @@ class TurnStrategiesTest < Minitest::Test
     assert strategy.keep_turn?([Result.new(:miss), Result.new(:hit)])
     assert strategy.keep_turn?([Result.new(:sunk), Result.new(:miss)])
   end
+
+  def test_factory_converts_setup_values_into_strategies
+    assert_instance_of SingleShotTurnStrategy, TurnStrategyFactory.build(:single_shot)
+    assert_instance_of ExtraShotOnHitTurnStrategy, TurnStrategyFactory.build("extra_shot_on_hit")
+    assert_raises(ArgumentError) { TurnStrategyFactory.build(:invalid) }
+  end
 end

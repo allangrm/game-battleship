@@ -28,6 +28,16 @@ class AttackHandlerTest < Minitest::Test
     assert_match(/Orientação inválida/, error.message)
   end
 
+  def test_missile_clips_its_area_at_board_edges
+    board = Board.new(5)
+    missile = Missile.new
+
+    assert_equal [[0, 0], [1, 0], [0, 1], [1, 1]], missile.target_cells(0, 0, board)
+    assert_equal [[0, 4], [1, 4]], missile.target_cells(0, 4, board)
+    assert_equal [[4, 0], [4, 1]], missile.target_cells(4, 0, board)
+    assert_equal [[4, 4]], missile.target_cells(4, 4, board)
+  end
+
   def test_handler_delegates_area_damage_and_sinking_to_board
     board = Board.new(5)
     ship = Ship.new("Barco", 2)

@@ -30,4 +30,15 @@ class RandomAITest < Minitest::Test
     assert_equal [1, 1], [decision.row, decision.col]
     assert_empty decision.options
   end
+
+  def test_current_policy_receives_inventory_but_still_chooses_basic_shot
+    board = Board.new(2)
+    inventory = WeaponInventory.for_map(:oceano)
+
+    decision = RandomAI.new(random: Random.new(9)).choose_attack(board, inventory: inventory)
+
+    assert_instance_of BasicShot, decision.weapon
+    assert_equal 3, inventory.remaining(:missile)
+    assert_equal 1, inventory.remaining(:airplane)
+  end
 end

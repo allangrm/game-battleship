@@ -77,7 +77,7 @@ Exemplos:
 
 ## Considerações de Arquitetura
 
-- **Polimorfismo:** Todas as armas (Míssil, Torpedo e Avião, relacionadas ao requisito adicional RF02) implementam um método comum, como `fire(coordenadas, tabuleiro)`, para que quem dispara não precise saber qual arma está sendo utilizada.
+- **Polimorfismo:** Todas as armas (Míssil e Avião, relacionadas ao requisito adicional RF02) implementam um método comum, como `fire(coordenadas, tabuleiro)`, para que quem dispara não precise saber qual arma está sendo utilizada.
 
 - **Strategy:** Os modos de turno (um tiro por vez e sequencial, relacionados ao requisito adicional RF03) tornam-se estratégias intercambiáveis.
 

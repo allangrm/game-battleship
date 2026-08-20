@@ -4,6 +4,7 @@
 #
 # @author Lívia Ferreira
 # @version 1.0
+
 class MenuController
   def initialize(window)
     @window = window

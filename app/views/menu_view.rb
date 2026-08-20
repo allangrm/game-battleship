@@ -177,15 +177,10 @@ class MenuView
   end
 
   def select_map(map_name)
-    unless @maps.key?(map_name)
-      @menu_message = "Mapa Oceano em desenvolvimento"
-      return
-    end
-
-    @current_map = map_name
-    @screen = :playing
-    @menu_message = nil
-    @window.caption = "Batalha Naval - #{map_name.to_s.capitalize}"
+    @window.navigate_to(
+      :game,
+      map_type: map_name
+    )
   end
 
   def open_map_menu
@@ -197,7 +192,7 @@ class MenuView
   def go_back
     case @screen
     when :cover
-      @controller.handle(:exit)
+      return
     when :map_menu
       @screen = :cover
       @menu_message = nil
