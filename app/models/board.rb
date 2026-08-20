@@ -41,8 +41,35 @@ class Board
 
     cells = coordinates.map { |row, col| cell_at(row, col) }
     ship.place(cells)
-    ships << ship
+    @ships << ship
     ship
+  end
+
+  # Remove um navio durante o setup e libera suas células.
+  def remove_ship(ship)
+    unless @ships.include?(ship)
+      raise ArgumentError, "Navio não pertence a este tabuleiro"
+    end
+
+    if grid.flatten.any?(&:attacked?)
+      raise ArgumentError, "Não é possível remover um navio depois do início da partida"
+    end
+
+    @ships.delete(ship)
+    ship.unplace
+    ship
+  end
+
+  # Move um navio durante o setup. Se a nova posição for inválida, restaura a
+  # posição anterior para não deixar o tabuleiro em um estado parcial.
+  def reposition_ship(ship, coordinates)
+    previous_coordinates = ship.cells.map { |cell| [cell.row, cell.col] }
+
+    remove_ship(ship)
+    place_ship(ship, coordinates)
+  rescue StandardError
+    place_ship(ship, previous_coordinates) if previous_coordinates&.any? && !ship.placed?
+    raise
   end
 
   # Posiciona uma frota de forma aleatória e limitada. Em caso de falha, todos
@@ -149,10 +176,7 @@ class Board
   end
 
   def rollback_auto_placements(placed_ships)
-    placed_ships.each do |ship|
-      ships.delete(ship)
-      ship.unplace
-    end
+    placed_ships.reverse_each { |ship| remove_ship(ship) }
   end
 
   def resolve_hit(cell)

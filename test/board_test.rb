@@ -32,6 +32,72 @@ class BoardTest < Minitest::Test
     refute board.valid_placement?(Ship.new("Fora", 2), [[0, 4], [0, 5]])
   end
 
+  def test_remove_ship_releases_its_cells
+    board = Board.new(5)
+    ship = Ship.new("Barco", 2)
+    board.place_ship(ship, [[0, 0], [0, 1]])
+
+    removed_ship = board.remove_ship(ship)
+
+    assert_same ship, removed_ship
+    assert_empty board.ships
+    refute ship.placed?
+    refute board.cell_at(0, 0).occupied?
+    refute board.cell_at(0, 1).occupied?
+  end
+
+  def test_remove_ship_rejects_a_ship_from_another_board
+    board = Board.new(5)
+    ship = Ship.new("Barco", 2)
+
+    error = assert_raises(ArgumentError) { board.remove_ship(ship) }
+
+    assert_equal "Navio não pertence a este tabuleiro", error.message
+  end
+
+  def test_reposition_ship_moves_without_duplicating_the_ship
+    board = Board.new(5)
+    ship = Ship.new("Barco", 2)
+    board.place_ship(ship, [[0, 0], [0, 1]])
+
+    repositioned_ship = board.reposition_ship(ship, [[2, 1], [2, 2]])
+
+    assert_same ship, repositioned_ship
+    assert_equal [ship], board.ships
+    refute board.cell_at(0, 0).occupied?
+    refute board.cell_at(0, 1).occupied?
+    assert_same ship, board.cell_at(2, 1).ship
+    assert_same ship, board.cell_at(2, 2).ship
+  end
+
+  def test_invalid_reposition_restores_the_previous_position
+    board = Board.new(5)
+    ship = Ship.new("Barco", 2)
+    board.place_ship(ship, [[0, 0], [0, 1]])
+
+    assert_raises(ArgumentError) do
+      board.reposition_ship(ship, [[4, 4], [4, 5]])
+    end
+
+    assert_equal [ship], board.ships
+    assert_same ship, board.cell_at(0, 0).ship
+    assert_same ship, board.cell_at(0, 1).ship
+    assert_equal [[0, 0], [0, 1]], ship.cells.map { |cell| [cell.row, cell.col] }
+  end
+
+  def test_remove_ship_is_rejected_after_an_attack
+    board = Board.new(5)
+    ship = Ship.new("Barco", 2)
+    board.place_ship(ship, [[0, 0], [0, 1]])
+    board.receive_attack(4, 4)
+
+    error = assert_raises(ArgumentError) { board.remove_ship(ship) }
+
+    assert_equal "Não é possível remover um navio depois do início da partida", error.message
+    assert_equal [ship], board.ships
+    assert ship.placed?
+  end
+
   def test_auto_placement_positions_the_complete_fleet_without_overlap
     config = MapConfig.new(:poca)
     board = config.create_board
