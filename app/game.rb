@@ -2,14 +2,14 @@
 
 require_relative "controllers/attack_handler"
 require_relative "turn_strategies/single_shot"
-require_relative "ai/random_ai"
+require_relative "ai/ai_factory"
 require_relative "weapons/weapon_inventory"
 
 # Mantém o estado e as regras de uma partida entre jogador e computador.
 # Toda alteração de Cell/Ship continua delegada ao Board via AttackHandler.
 #
 # @author Júlio Pedro
-# @version 1.1
+# @version 1.2
 class Game
   class InvalidTurnError < StandardError; end
   class GameFinishedError < StandardError; end
@@ -47,14 +47,14 @@ class Game
 
   attr_reader :player_board, :enemy_board, :current_turn, :state,
               :started_at, :ended_at, :turn_strategy, :map_type,
-              :player_inventory, :computer_inventory
+              :player_inventory, :computer_inventory, :ai
 
   def initialize(
     player_board:,
     enemy_board:,
     map_type:,
     turn_strategy: SingleShotTurnStrategy.new,
-    ai: RandomAI.new,
+    ai: nil,
     player_inventory: nil,
     computer_inventory: nil,
     first_turn: :player,
@@ -75,8 +75,9 @@ class Game
       raise ArgumentError, "Jogador e computador precisam de inventários independentes"
     end
 
+    selected_ai = ai || AIFactory.for_map(@map_type)
     validate_collaborator!(:turn_strategy, turn_strategy, :keep_turn?)
-    validate_collaborator!(:ai, ai, :choose_attack)
+    validate_collaborator!(:ai, selected_ai, :choose_attack)
     raise ArgumentError, "Turno inicial inválido: #{first_turn.inspect}" unless TURNS.include?(first_turn)
 
     @clock = clock || -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) }
@@ -85,7 +86,7 @@ class Game
     @player_board = player_board
     @enemy_board = enemy_board
     @turn_strategy = turn_strategy
-    @ai = ai
+    @ai = selected_ai
     @current_turn = first_turn
     @state = :playing
     @history = []

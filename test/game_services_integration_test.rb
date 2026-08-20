@@ -50,7 +50,7 @@ class GameServicesIntegrationTest < Minitest::Test
       enemy_board: enemy_board,
       map_type: map_type,
       turn_strategy: strategy_class.new,
-      ai: RandomAI.new(random: Random.new(300 + strategy_index))
+      ai: AIFactory.for_map(map_type, random: Random.new(300 + strategy_index))
     )
   end
 

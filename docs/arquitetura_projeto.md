@@ -94,9 +94,10 @@ flowchart TD
     Board --> Cell
 
     Game --> TurnStrategy
-    Game --> RandomAI
+    Game --> AIFactory
+    AIFactory --> ComputerAI[RandomAI / HuntTargetAI / StrategicAI]
     Game --> WeaponInventory
-    RandomAI --> Board
+    ComputerAI --> Board
 
     Game -. estatísticas finais .-> ScoreCalculator
     ScoreCalculator -. pontuação .-> Database
@@ -169,7 +170,7 @@ O `WeaponInventory` mantém cargas independentes para jogador e computador:
 | Lago | 2 | 1 |
 | Oceano | 3 | 1 |
 
-Uma carga só é consumida após um ataque válido. A política atual de `RandomAI` escolhe apenas `BasicShot`, embora seu contrato aceite o inventário para evoluções futuras.
+Uma carga só é consumida após um ataque válido. As estratégias atuais da IA escolhem apenas `BasicShot`, embora o contrato aceite o inventário para uma evolução futura com Míssil e Avião.
 
 ## 9. Turnos e IA
 
@@ -182,7 +183,15 @@ O contrato `TurnStrategy#keep_turn?` permite trocar o comportamento sem espalhar
 
 Em armas de área, uma ação concede no máximo uma continuação, mesmo que produza vários acertos.
 
-`RandomAI` escolhe somente células ainda não atacadas. O `GameController` continua executando ações automáticas enquanto o turno pertencer ao computador ou até a partida terminar.
+Quando nenhuma IA é injetada explicitamente, `Game` usa `AIFactory` para selecionar a dificuldade do mapa:
+
+| Mapa | Dificuldade | Estratégia | Comportamento |
+|---|---|---|---|
+| Poça | Fácil | `RandomAI` | Escolha aleatória entre células ainda não atacadas |
+| Lago | Média | `HuntTargetAI` | Persegue células ortogonais após um acerto |
+| Oceano | Difícil | `StrategicAI` | Prolonga acertos alinhados e usa busca quadriculada |
+
+As três estratégias evitam coordenadas repetidas e consultam apenas informações já visíveis no tabuleiro. Nenhuma usa `cell.ship` ou `cell.occupied?` para descobrir posições ocultas. O `GameController` continua executando ações automáticas enquanto o turno pertencer ao computador ou até a partida terminar.
 
 ## 10. Controllers
 
@@ -365,8 +374,8 @@ A descrição detalhada permanece em [divisao.md](./divisao.md).
 
 Em 20 de agosto de 2026, a suíte automatizada possui:
 
-- 61 testes;
-- 283 asserções;
+- 69 testes;
+- 317 asserções;
 - nenhuma falha, erro ou teste ignorado;
 - execução aprovada com warnings do Ruby habilitados.
 
@@ -376,6 +385,7 @@ A cobertura automatizada inclui:
 - armas, áreas, repetição e afundamento;
 - inventários e limites por mapa;
 - IA sem repetição;
+- três dificuldades de IA, perseguição de acertos, busca direcional e busca quadriculada;
 - dois modos de turno;
 - vitória, derrota, duração, histórico e estatísticas finais;
 - controller de partida;
@@ -438,6 +448,7 @@ O projeto só deve ser considerado concluído quando:
 - `bundle exec ruby main.rb` abrir o menu completo;
 - nome, mapa, modo de turno e posicionamento forem configuráveis;
 - uma partida puder terminar em vitória e derrota;
+- Poça, Lago e Oceano utilizarem respectivamente as IAs fácil, média e difícil;
 - ataque básico, míssil e avião funcionarem pela interface;
 - os dois modos de turno funcionarem pela interface;
 - resultado, pontuação e duração forem exibidos;

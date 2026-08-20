@@ -43,7 +43,7 @@ Responsável principal: **Allan**.
 - **RF06:** implementar o ataque básico integrado ao ciclo da partida.
 - **RF07:** validar limite e repetição das jogadas.
 - **RF09:** implementar vitória e derrota.
-- Implementar o oponente/IA sem repetir coordenadas.
+- Implementar o oponente/IA sem repetir coordenadas, com dificuldades fácil, média e difícil selecionadas conforme o mapa.
 - Implementar os dois modos de turno:
   - um tiro por vez;
   - tiro adicional em caso de acerto.

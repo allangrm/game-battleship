@@ -63,7 +63,20 @@ game.computer_inventory.available?(:airplane)
 game.player_inventory.to_h
 ```
 
-A política atual de `RandomAI` ainda escolhe apenas `BasicShot`, mas já recebe seu inventário ao decidir uma ação. Isso permite adicionar a escolha de armas especiais sem alterar o contrato do `Game`.
+## Dificuldade da IA
+
+Quando nenhuma IA é injetada explicitamente, `Game` seleciona a estratégia padrão conforme o mapa:
+
+| Mapa | Dificuldade | Estratégia | Comportamento |
+| --- | --- | --- | --- |
+| Poça | Fácil | `RandomAI` | Escolhe aleatoriamente entre células ainda não atacadas |
+| Lago | Média | `HuntTargetAI` | Prioriza células ortogonais próximas de um acerto ativo |
+| Oceano | Difícil | `StrategicAI` | Prolonga acertos alinhados e procura novos alvos em padrão quadriculado |
+
+Todas as estratégias consultam somente estados visíveis das células e nunca repetem a origem de um ataque. Nesta versão, as três usam `BasicShot`; o inventário já continua disponível no contrato para uma futura política de Míssil e Avião.
+
+Uma IA personalizada ainda pode ser fornecida com `ai:` ao criar `Game`, desde que implemente `choose_attack(board, inventory:)`.
+`game.ai` expõe a estratégia selecionada de forma somente leitura.
 
 ## Evento de ataque
 

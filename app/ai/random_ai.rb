@@ -6,7 +6,7 @@ require_relative "../weapons/basic_shot"
 # O Board permanece como fonte de verdade do histórico de coordenadas.
 # 
 # @author Júlio Pedro
-# @version 1.1
+# @version 1.2
 class RandomAI
   class NoAvailableCoordinateError < StandardError; end
 
@@ -17,10 +17,31 @@ class RandomAI
   end
 
   def choose_attack(board, inventory: nil)
-    available_cells = board.grid.flatten.reject(&:attacked?)
-    raise NoAvailableCoordinateError, "Não existem coordenadas disponíveis" if available_cells.empty?
+    cells = available_cells(board)
+    ensure_available_coordinate!(cells)
 
-    cell = available_cells.sample(random: @random)
+    decision_for(random_cell(cells))
+  end
+
+  protected
+
+  attr_reader :random
+
+  def available_cells(board)
+    board.grid.flatten.reject(&:attacked?)
+  end
+
+  def ensure_available_coordinate!(cells)
+    return unless cells.empty?
+
+    raise NoAvailableCoordinateError, "Não existem coordenadas disponíveis"
+  end
+
+  def random_cell(cells)
+    cells.sample(random: random)
+  end
+
+  def decision_for(cell)
     Decision.new(
       row: cell.row,
       col: cell.col,

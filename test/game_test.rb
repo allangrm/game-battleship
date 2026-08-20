@@ -84,6 +84,24 @@ class GameTest < Minitest::Test
     end
   end
 
+  def test_selects_the_default_ai_strategy_from_the_map
+    expected_strategies = {
+      poca: RandomAI,
+      lago: HuntTargetAI,
+      oceano: StrategicAI
+    }
+
+    expected_strategies.each do |map_type, strategy_class|
+      game = Game.new(
+        player_board: board_with_ships([[[0, 0]]]),
+        enemy_board: board_with_ships([[[1, 1]]]),
+        map_type: map_type
+      )
+
+      assert_instance_of strategy_class, game.ai
+    end
+  end
+
   def test_single_shot_changes_turn_even_after_a_hit
     game = build_game(
       player_ships: [[[2, 1], [2, 2]]],
