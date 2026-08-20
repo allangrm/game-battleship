@@ -8,7 +8,7 @@ class GameControllerTest < Minitest::Test
       @coordinates = coordinates
     end
 
-    def choose_attack(_board)
+    def choose_attack(_board, inventory: nil)
       row, col = @coordinates.shift
       raise "Sequência da IA esgotada" if row.nil?
 
@@ -113,6 +113,7 @@ class GameControllerTest < Minitest::Test
     Game.new(
       player_board: board_with_ships(player_ships),
       enemy_board: board_with_ships(enemy_ships),
+      map_type: :poca,
       turn_strategy: turn_strategy,
       ai: ai,
       first_turn: first_turn

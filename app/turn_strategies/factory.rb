@@ -4,6 +4,9 @@ require_relative "single_shot"
 require_relative "extra_shot_on_hit"
 
 # Converte a opção coletada no setup em uma estratégia de turno.
+# 
+# @author Júlio Pedro
+# @version 1.1
 class TurnStrategyFactory
   STRATEGIES = {
     single_shot: SingleShotTurnStrategy,
