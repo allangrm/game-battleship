@@ -5,9 +5,9 @@ require_relative "test_helper"
 class WeaponInventoryTest < Minitest::Test
   def test_loadouts_scale_special_weapons_by_map
     expected = {
-      poca: { basic_shot: nil, missile: 1, torpedo: 1, airplane: 1 },
-      lago: { basic_shot: nil, missile: 2, torpedo: 2, airplane: 1 },
-      oceano: { basic_shot: nil, missile: 3, torpedo: 3, airplane: 1 }
+      poca: { basic_shot: nil, missile: 1, airplane: 1 },
+      lago: { basic_shot: nil, missile: 2, airplane: 1 },
+      oceano: { basic_shot: nil, missile: 3, airplane: 1 }
     }
 
     expected.each do |map_type, loadout|
@@ -36,10 +36,10 @@ class WeaponInventoryTest < Minitest::Test
     player_inventory = WeaponInventory.for_map(:lago)
     computer_inventory = WeaponInventory.for_map(:lago)
 
-    player_inventory.consume!(:torpedo)
+    player_inventory.consume!(:airplane)
 
-    assert_equal 1, player_inventory.remaining(:torpedo)
-    assert_equal 2, computer_inventory.remaining(:torpedo)
+    assert_equal 0, player_inventory.remaining(:airplane)
+    assert_equal 1, computer_inventory.remaining(:airplane)
   end
 
   def test_rejects_invalid_maps_weapons_and_amounts

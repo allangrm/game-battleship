@@ -39,30 +39,27 @@ Armas e opções:
 ```ruby
 controller.handle_player_attack(row, col) # BasicShot por padrão
 controller.handle_player_attack(row, col, Missile.new)
-controller.handle_player_attack(row, col, Torpedo.new, direction: :right)
 controller.handle_player_attack(row, col, Airplane.new, orientation: :row)
 controller.handle_player_attack(row, col, Airplane.new, orientation: :col)
 ```
 
 No Míssil, a coordenada escolhida é o canto superior esquerdo do bloco 2x2. A origem já atacada invalida a ação. Outras células já atacadas dentro da área são ignoradas.
 
-O Torpedo começa na coordenada escolhida e atinge até três células consecutivas. As direções aceitas são `:up`, `:down`, `:left` e `:right`; células além da borda são descartadas.
-
 ## Inventários e limites
 
 Jogador e computador recebem inventários separados com as mesmas cargas. O ataque básico é ilimitado.
 
-| Mapa | Míssil | Torpedo | Avião |
-| --- | ---: | ---: | ---: |
-| Poça | 1 | 1 | 1 |
-| Lago | 2 | 2 | 1 |
-| Oceano | 3 | 3 | 1 |
+| Mapa | Míssil | Avião |
+| --- | ---: | ---: |
+| Poça | 1 | 1 |
+| Lago | 2 | 1 |
+| Oceano | 3 | 1 |
 
 Uma carga é consumida somente depois que o ataque passa pelas validações. Coordenada inválida ou origem repetida não consome a arma.
 
 ```ruby
 game.player_inventory.remaining(:missile)
-game.computer_inventory.available?(:torpedo)
+game.computer_inventory.available?(:airplane)
 game.player_inventory.to_h
 ```
 
@@ -75,7 +72,7 @@ Cada `Game::AttackEvent` expõe:
 | Campo | Conteúdo |
 | --- | --- |
 | `actor` | `:player` ou `:computer` |
-| `weapon` | `:basic_shot`, `:missile`, `:torpedo` ou `:airplane` |
+| `weapon` | `:basic_shot`, `:missile` ou `:airplane` |
 | `remaining_uses` | Cargas restantes após a ação; `nil` para ataque básico |
 | `cells` | Array congelado de resultados por coordenada |
 | `turn_before` | Ator que iniciou a ação |

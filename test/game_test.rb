@@ -141,7 +141,7 @@ class GameTest < Minitest::Test
     refute game.enemy_board.cell_at(2, 2).attacked?
   end
 
-  def test_repeated_origin_and_invalid_direction_do_not_consume_charges
+  def test_repeated_origin_and_invalid_orientation_do_not_consume_charges
     game = build_game(
       player_ships: [[[2, 0], [2, 1]]],
       enemy_ships: [
@@ -159,9 +159,9 @@ class GameTest < Minitest::Test
     assert_equal 1, game.player_inventory.remaining(:missile)
 
     assert_raises(ArgumentError) do
-      game.player_attack(2, 2, Torpedo.new, direction: :diagonal)
+      game.player_attack(2, 2, Airplane.new, orientation: :diagonal)
     end
-    assert_equal 2, game.player_inventory.remaining(:torpedo)
+    assert_equal 1, game.player_inventory.remaining(:airplane)
   end
 
   def test_computer_receives_its_inventory_and_can_spend_a_special_weapon

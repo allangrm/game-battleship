@@ -4,17 +4,17 @@
 # cada participante recebe uma instância própria com os mesmos limites do mapa.
 # 
 # @author Júlio Pedro
-# @version 1.1
+# @version 1.2
 class WeaponInventory
   class WeaponUnavailableError < StandardError; end
 
-  WEAPONS = %i[basic_shot missile torpedo airplane].freeze
+  WEAPONS = %i[basic_shot missile airplane].freeze
   UNLIMITED = nil
 
   LOADOUTS = {
-    poca: { missile: 1, torpedo: 1, airplane: 1 }.freeze,
-    lago: { missile: 2, torpedo: 2, airplane: 1 }.freeze,
-    oceano: { missile: 3, torpedo: 3, airplane: 1 }.freeze
+    poca: { missile: 1, airplane: 1 }.freeze,
+    lago: { missile: 2, airplane: 1 }.freeze,
+    oceano: { missile: 3, airplane: 1 }.freeze
   }.freeze
 
   attr_reader :map_type

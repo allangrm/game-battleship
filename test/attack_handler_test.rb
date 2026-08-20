@@ -7,7 +7,6 @@ class AttackHandlerTest < Minitest::Test
     assert_instance_of BasicShot, BasicShot.new
     assert_instance_of Missile, Missile.new
     assert_instance_of Airplane, Airplane.new
-    assert_instance_of Torpedo, Torpedo.new
     assert_instance_of AttackHandler, AttackHandler.new(Board.new(5))
   end
 
@@ -19,10 +18,6 @@ class AttackHandlerTest < Minitest::Test
     assert_equal (0...5).map { |col| [2, col] }, Airplane.new.target_cells(2, 0, board)
     assert_equal (0...5).map { |row| [row, 3] },
                  Airplane.new.target_cells(0, 3, board, orientation: :col)
-    assert_equal [[2, 2], [2, 3], [2, 4]],
-                 Torpedo.new.target_cells(2, 2, board, direction: :right)
-    assert_equal [[4, 4]],
-                 Torpedo.new.target_cells(4, 4, board, direction: :down)
   end
 
   def test_airplane_rejects_an_invalid_orientation
@@ -33,15 +28,14 @@ class AttackHandlerTest < Minitest::Test
     assert_match(/Orientação inválida/, error.message)
   end
 
-  def test_torpedo_supports_four_directions_and_rejects_an_invalid_one
+  def test_missile_clips_its_area_at_board_edges
     board = Board.new(5)
-    torpedo = Torpedo.new
+    missile = Missile.new
 
-    assert_equal [[2, 2], [1, 2], [0, 2]], torpedo.target_cells(2, 2, board, direction: :up)
-    assert_equal [[2, 2], [3, 2], [4, 2]], torpedo.target_cells(2, 2, board, direction: :down)
-    assert_equal [[2, 2], [2, 1], [2, 0]], torpedo.target_cells(2, 2, board, direction: :left)
-    assert_equal [[2, 2], [2, 3], [2, 4]], torpedo.target_cells(2, 2, board, direction: :right)
-    assert_raises(ArgumentError) { torpedo.target_cells(2, 2, board, direction: :diagonal) }
+    assert_equal [[0, 0], [1, 0], [0, 1], [1, 1]], missile.target_cells(0, 0, board)
+    assert_equal [[0, 4], [1, 4]], missile.target_cells(0, 4, board)
+    assert_equal [[4, 0], [4, 1]], missile.target_cells(4, 0, board)
+    assert_equal [[4, 4]], missile.target_cells(4, 4, board)
   end
 
   def test_handler_delegates_area_damage_and_sinking_to_board

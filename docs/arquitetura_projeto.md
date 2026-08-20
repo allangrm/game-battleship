@@ -159,16 +159,15 @@ Elas calculam coordenadas; somente o `Board` altera o estado das células e dos 
 |---|---|---|
 | `BasicShot` | `:basic_shot` | Ataca uma célula e possui uso ilimitado |
 | `Missile` | `:missile` | Ataca um bloco 2x2 a partir do canto superior esquerdo |
-| `Torpedo` | `:torpedo` | Ataca até três células em uma direção |
 | `Airplane` | `:airplane` | Ataca uma linha ou coluna inteira |
 
 O `WeaponInventory` mantém cargas independentes para jogador e computador:
 
-| Mapa | Míssil | Torpedo | Avião |
-|---|---:|---:|---:|
-| Poça | 1 | 1 | 1 |
-| Lago | 2 | 2 | 1 |
-| Oceano | 3 | 3 | 1 |
+| Mapa | Míssil | Avião |
+|---|---:|---:|
+| Poça | 1 | 1 |
+| Lago | 2 | 1 |
+| Oceano | 3 | 1 |
 
 Uma carga só é consumida após um ataque válido. A política atual de `RandomAI` escolhe apenas `BasicShot`, embora seu contrato aceite o inventário para evoluções futuras.
 
@@ -223,7 +222,7 @@ O modo de turno atual usa `SingleShotTurnStrategy` por padrão. Os tabuleiros s�
 - Nome do jogador, modo de turno e posicionamento manual não são coletados.
 - `GameView` apenas seleciona e destaca a célula inimiga; ainda não chama `GameController#handle_player_attack`.
 - Estados de água, acerto e afundamento ainda não são desenhados.
-- Não existem controles de arma, direção do torpedo ou orientação do avião.
+- Não existem controles de arma ou orientação do avião.
 - Não existe transição para resultado, gravação ou ranking.
 
 ## 12. Setup da partida
@@ -367,7 +366,7 @@ A descrição detalhada permanece em [divisao.md](./divisao.md).
 Em 20 de agosto de 2026, a suíte automatizada possui:
 
 - 61 testes;
-- 288 asserções;
+- 283 asserções;
 - nenhuma falha, erro ou teste ignorado;
 - execução aprovada com warnings do Ruby habilitados.
 
@@ -439,7 +438,7 @@ O projeto só deve ser considerado concluído quando:
 - `bundle exec ruby main.rb` abrir o menu completo;
 - nome, mapa, modo de turno e posicionamento forem configuráveis;
 - uma partida puder terminar em vitória e derrota;
-- ataque básico, míssil, torpedo e avião funcionarem pela interface;
+- ataque básico, míssil e avião funcionarem pela interface;
 - os dois modos de turno funcionarem pela interface;
 - resultado, pontuação e duração forem exibidos;
 - jogador e partida forem persistidos;

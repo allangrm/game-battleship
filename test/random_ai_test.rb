@@ -39,7 +39,6 @@ class RandomAITest < Minitest::Test
 
     assert_instance_of BasicShot, decision.weapon
     assert_equal 3, inventory.remaining(:missile)
-    assert_equal 3, inventory.remaining(:torpedo)
     assert_equal 1, inventory.remaining(:airplane)
   end
 end
