@@ -71,7 +71,8 @@ class MainWindow < Gosu::Window
 
     game = Game.new(
       player_board: player_board,
-      enemy_board: enemy_board
+      enemy_board: enemy_board,
+      map_type: map_config.map_type
     )
 
     controller = GameController.new(game)
