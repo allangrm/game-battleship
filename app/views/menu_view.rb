@@ -6,7 +6,7 @@ require "gosu"
 # As ações são encaminhadas ao controller, sem montar a partida na view.
 #
 # @author Lívia Ferreira
-# @version 1.1
+# @version 1.2
 class MenuView
   ASSET_PATH = File.expand_path("../models/images", __dir__)
 
@@ -14,6 +14,8 @@ class MenuView
   PLAY_Y = 347
   RANKING_X = 920
   RANKING_Y = 490
+  MENU_X = 748
+  MENU_Y = 347
   EXIT_X = 1_270
   EXIT_Y = 650
   BACK_X = 23
@@ -75,6 +77,7 @@ class MenuView
     @menu_background = load_image("fundo_menu.png")
     @play_image = load_image("play.png")
     @ranking_image = load_image("botao_ranking.png")
+    @menu_image = load_image("botao_menu.png")
     @exit_image = load_image("botao_sair.png")
     @back_image = load_image("botao_voltar_play.png")
 
@@ -94,6 +97,7 @@ class MenuView
   def configure_buttons
     @play_button = image_button(@play_image, PLAY_X, PLAY_Y)
     @ranking_button = image_button(@ranking_image, RANKING_X, RANKING_Y)
+    @menu_button = image_button(@menu_image, MENU_X, MENU_Y)
     @exit_button = image_button(@exit_image, EXIT_X, EXIT_Y)
     @back_button = image_button(@back_image, BACK_X, BACK_Y)
 
@@ -105,6 +109,7 @@ class MenuView
   def draw_cover
     @cover_background.draw(0, 0, 0)
     draw_image_button(@play_button)
+    draw_image_button(@menu_button)
     draw_image_button(@ranking_button)
     draw_image_button(@exit_button)
   end
@@ -148,6 +153,8 @@ class MenuView
   def handle_cover_click(mouse_x, mouse_y)
     if clicked_image?(@play_button, mouse_x, mouse_y)
       @controller.handle(:start_game)
+    elsif clicked_image?(@menu_button, mouse_x, mouse_y)
+      @controller.handle(:show_options_menu)
     elsif clicked_image?(@ranking_button, mouse_x, mouse_y)
       @controller.handle(:show_ranking)
     elsif clicked_image?(@exit_button, mouse_x, mouse_y)

@@ -3,7 +3,7 @@
 # Recebe as ações do menu e solicita a navegação à janela principal.
 #
 # @author Lívia Ferreira
-# @version 1.1
+# @version 1.2
 
 class MenuController
   def initialize(window)
@@ -16,6 +16,8 @@ class MenuController
       @window.navigate_to(:map_menu)
     when :show_ranking
       @window.navigate_to(:ranking)
+    when :show_options_menu
+      @window.navigate_to(:options_menu)
     when :show_instructions
       @window.navigate_to(:instructions)
     when :exit

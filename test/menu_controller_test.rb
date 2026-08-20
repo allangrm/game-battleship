@@ -30,6 +30,7 @@ class MenuControllerTest < Minitest::Test
     {
       start_game: :map_menu,
       show_ranking: :ranking,
+      show_options_menu: :options_menu,
       show_instructions: :instructions
     }.each do |action, destination|
       @controller.handle(action)
