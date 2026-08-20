@@ -23,6 +23,9 @@ class BoardRenderer
   TEXT_COLOR = Gosu::Color::WHITE
   SELECTION_COLOR = Gosu::Color.rgba(255, 215, 0, 100)
 
+  MARK_COLOR = Gosu::Color::WHITE
+  SUNK_MARK_COLOR = Gosu::Color.rgb(80, 30, 10)
+
   def initialize(window)
     @window = window
     @title_font = Gosu::Font.new(26)
@@ -209,6 +212,13 @@ class BoardRenderer
       2
     )
 
+    draw_cell_status(
+      cell,
+      cell_x,
+      cell_y,
+      current_cell_size
+    )
+
     draw_cell_border(
       cell_x,
       cell_y,
@@ -240,6 +250,81 @@ class BoardRenderer
       else
         WATER_COLOR
       end
+    end
+  end
+
+  def draw_cell_status(cell, x, y, current_cell_size)
+    case cell.status
+    when :miss
+      draw_miss_marker(x, y, current_cell_size)
+    when :hit
+      draw_x_marker(
+        x,
+        y,
+        current_cell_size,
+        MARK_COLOR
+      )
+    when :sunk
+      draw_x_marker(
+        x,
+        y,
+        current_cell_size,
+        SUNK_MARK_COLOR,
+        thickness: 2
+      )
+    end
+  end
+
+  def draw_miss_marker(x, y, current_cell_size)
+    marker_size = [current_cell_size * 0.16, 7].max
+
+    marker_x = x + ((current_cell_size - marker_size) / 2)
+    marker_y = y + ((current_cell_size - marker_size) / 2)
+
+    Gosu.draw_rect(
+      marker_x,
+      marker_y,
+      marker_size,
+      marker_size,
+      MARK_COLOR,
+      4
+    )
+  end
+
+  def draw_x_marker(
+    x,
+    y,
+    current_cell_size,
+    color,
+    thickness: 1
+  )
+    inset = current_cell_size * 0.25
+
+    left = x + inset
+    right = x + current_cell_size - inset
+    top = y + inset
+    bottom = y + current_cell_size - inset
+
+    (-thickness..thickness).each do |offset|
+      Gosu.draw_line(
+        left + offset,
+        top,
+        color,
+        right + offset,
+        bottom,
+        color,
+        4
+      )
+
+      Gosu.draw_line(
+        right + offset,
+        top,
+        color,
+        left + offset,
+        bottom,
+        color,
+        4
+      )
     end
   end
 end
