@@ -25,7 +25,7 @@ class MainWindow < Gosu::Window
   TITLE = "Batalha Naval"
 
   def initialize
-    super(WIDTH, HEIGHT)
+    super(WIDTH, HEIGHT, fullscreen: true)
     self.caption = TITLE
 
     @menu_controller = MenuController.new(self)
@@ -46,6 +46,7 @@ class MainWindow < Gosu::Window
   end
 
   def button_down(id)
+    super
     @active_view.button_down(id, mouse_x, mouse_y)
   end
 
