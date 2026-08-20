@@ -61,6 +61,12 @@ class AIDifficultyTest < Minitest::Test
       assert board.valid_coordinate?(decision.row, decision.col)
       assert_instance_of BasicShot, decision.weapon
     end
+
+    special_decision = StrategicAI.new(random: Random.new(3)).choose_attack(
+      board,
+      inventory: WeaponInventory.for_map(:oceano)
+    )
+    assert_instance_of Airplane, special_decision.weapon
   end
 
   def test_every_difficulty_avoids_repeated_coordinates
@@ -80,16 +86,72 @@ class AIDifficultyTest < Minitest::Test
     end
   end
 
-  def test_new_strategies_do_not_consume_special_weapon_inventory
+  def test_easy_ai_keeps_the_basic_shot_policy
+    inventory = WeaponInventory.for_map(:poca)
+    decision = RandomAI.new(random: Random.new(5)).choose_attack(
+      Board.new(5),
+      inventory: inventory
+    )
+
+    assert_instance_of BasicShot, decision.weapon
+    assert_equal({ basic_shot: nil, missile: 1, airplane: 1 }, inventory.to_h)
+  end
+
+  def test_medium_ai_uses_missile_around_a_visible_hit
+    board = Board.new(5)
+    ship = Ship.new("Fragata", 3)
+    board.place_ship(ship, [[2, 2], [2, 3], [2, 4]])
+    board.receive_attack(2, 2)
+    inventory = WeaponInventory.for_map(:lago)
+
+    decision = HuntTargetAI.new(random: Random.new(5)).choose_attack(
+      board,
+      inventory: inventory
+    )
+    targets = decision.weapon.target_cells(decision.row, decision.col, board)
+
+    assert_instance_of Missile, decision.weapon
+    assert_includes targets, [2, 2]
+    refute board.cell_at(decision.row, decision.col).attacked?
+    assert_equal 2, inventory.remaining(:missile)
+  end
+
+  def test_medium_ai_uses_airplane_for_aligned_visible_hits
+    board = Board.new(5)
+    ship = Ship.new("Corveta", 4)
+    board.place_ship(ship, [[2, 0], [2, 1], [2, 2], [2, 3]])
+    board.receive_attack(2, 1)
+    board.receive_attack(2, 2)
+
+    decision = HuntTargetAI.new(random: Random.new(8)).choose_attack(
+      board,
+      inventory: WeaponInventory.for_map(:lago)
+    )
+
+    assert_instance_of Airplane, decision.weapon
+    assert_equal :row, decision.options[:orientation]
+    assert_equal 2, decision.row
+    refute board.cell_at(decision.row, decision.col).attacked?
+  end
+
+  def test_hard_ai_uses_special_weapons_proactively
+    board = Board.new(5)
     inventory = WeaponInventory.for_map(:oceano)
 
-    [HuntTargetAI, StrategicAI].each do |strategy|
-      decision = strategy.new(random: Random.new(5)).choose_attack(Board.new(3), inventory: inventory)
+    airplane_decision = StrategicAI.new(random: Random.new(5)).choose_attack(
+      board,
+      inventory: inventory
+    )
+    inventory.consume!(:airplane)
+    missile_decision = StrategicAI.new(random: Random.new(5)).choose_attack(
+      board,
+      inventory: inventory
+    )
 
-      assert_instance_of BasicShot, decision.weapon
-    end
-
+    assert_instance_of Airplane, airplane_decision.weapon
+    assert_includes %i[row col], airplane_decision.options[:orientation]
+    assert_instance_of Missile, missile_decision.weapon
     assert_equal 3, inventory.remaining(:missile)
-    assert_equal 1, inventory.remaining(:airplane)
+    assert_equal 0, inventory.remaining(:airplane)
   end
 end

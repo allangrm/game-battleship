@@ -31,7 +31,7 @@ class RandomAITest < Minitest::Test
     assert_empty decision.options
   end
 
-  def test_current_policy_receives_inventory_but_still_chooses_basic_shot
+  def test_easy_policy_receives_inventory_but_still_chooses_basic_shot
     board = Board.new(2)
     inventory = WeaponInventory.for_map(:oceano)
 

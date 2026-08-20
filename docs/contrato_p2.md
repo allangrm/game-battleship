@@ -4,7 +4,11 @@ Este documento descreve a API oferecida pela lógica de partida para as frentes 
 
 ## Criação da partida
 
-O setup deve fornecer dois tabuleiros diferentes, do mesmo tamanho e com ao menos um navio posicionado em cada um.
+O setup deve fornecer dois tabuleiros diferentes e compatíveis com o
+`MapConfig` selecionado. O `Game` valida o tamanho, exige todos os navios
+posicionados e compara a composição completa da frota pelos tamanhos. Assim,
+uma partida `:oceano`, por exemplo, não aceita um tabuleiro ou uma frota de
+`:poca`.
 
 ```ruby
 turn_strategy = TurnStrategyFactory.build(:extra_shot_on_hit)
@@ -67,13 +71,35 @@ game.player_inventory.to_h
 
 Quando nenhuma IA é injetada explicitamente, `Game` seleciona a estratégia padrão conforme o mapa:
 
-| Mapa | Dificuldade | Estratégia | Comportamento |
-| --- | --- | --- | --- |
-| Poça | Fácil | `RandomAI` | Escolhe aleatoriamente entre células ainda não atacadas |
-| Lago | Média | `HuntTargetAI` | Prioriza células ortogonais próximas de um acerto ativo |
-| Oceano | Difícil | `StrategicAI` | Prolonga acertos alinhados e procura novos alvos em padrão quadriculado |
+| Mapa | Dificuldade | Estratégia | Busca básica | Política de armas especiais |
+| --- | --- | --- | --- | --- |
+| Poça | Fácil | `RandomAI` | Escolhe aleatoriamente entre células ainda não atacadas | Usa somente `BasicShot`, preservando o nível introdutório |
+| Lago | Média | `HuntTargetAI` | Prioriza células ortogonais próximas de um acerto ativo | Usa Míssil ao redor de um acerto visível e Avião quando existem ao menos dois acertos alinhados |
+| Oceano | Difícil | `StrategicAI` | Prolonga acertos alinhados e procura novos alvos em padrão quadriculado | Além das regras da IA média, usa o Avião e o Míssil proativamente nas áreas com mais células ainda não atacadas |
 
-Todas as estratégias consultam somente estados visíveis das células e nunca repetem a origem de um ataque. Nesta versão, as três usam `BasicShot`; o inventário já continua disponível no contrato para uma futura política de Míssil e Avião.
+### Prioridade de decisão das armas
+
+A escolha retorna arma, origem e opções dentro da mesma `Decision` já consumida
+por `Game#computer_attack`. A IA não remove cargas diretamente.
+
+- **Fácil:** tiro básico em uma célula aleatória disponível.
+- **Média:** Avião sobre dois ou mais acertos visíveis alinhados; na ausência
+  dessa condição, Míssil em um bloco que inclua um acerto visível; caso não
+  exista carga ou alvo válido, aplica a perseguição com tiro básico.
+- **Difícil:** Avião sobre acertos alinhados; Míssil perto de qualquer acerto
+  visível; Avião sobre a linha ou coluna de um acerto isolado; sem acertos,
+  usa primeiro o Avião na linha/coluna com maior cobertura disponível e depois
+  o Míssil no bloco 2x2 com mais células não atacadas; por fim, volta à busca
+  estratégica com tiro básico.
+
+As cargas são oportunidades, não ataques obrigatórios. Uma arma sem carga ou
+sem origem válida é ignorada, permitindo o fallback seguinte. A origem sempre
+é uma célula ainda não atacada, mas células já atingidas dentro da área são
+ignoradas pelo `AttackHandler` conforme o contrato geral.
+
+Todas as estratégias consultam somente estados visíveis (`:hit`, `:miss`,
+`:sunk` e não atacado). Elas não acessam `cell.ship` nem `cell.occupied?` para
+descobrir posições ocultas e nunca repetem a origem de um ataque.
 
 Uma IA personalizada ainda pode ser fornecida com `ai:` ao criar `Game`, desde que implemente `choose_attack(board, inventory:)`.
 `game.ai` expõe a estratégia selecionada de forma somente leitura.

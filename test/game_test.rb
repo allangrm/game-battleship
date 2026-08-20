@@ -36,18 +36,39 @@ class GameTest < Minitest::Test
   end
 
   def test_requires_both_boards_to_have_a_fleet
-    populated_board = board_with_ships([[[0, 0]]])
+    populated_board = configured_board
 
     assert_raises(ArgumentError) do
-      Game.new(player_board: Board.new(3), enemy_board: populated_board, map_type: :poca)
+      Game.new(player_board: Board.new(5), enemy_board: populated_board, map_type: :poca)
     end
     assert_raises(ArgumentError) do
-      Game.new(player_board: populated_board, enemy_board: Board.new(3), map_type: :poca)
+      Game.new(player_board: populated_board, enemy_board: Board.new(5), map_type: :poca)
+    end
+  end
+
+  def test_rejects_a_board_with_size_or_fleet_incompatible_with_the_map
+    wrong_size = configured_board(:poca)
+    incomplete_fleet = Board.new(10)
+    incomplete_fleet.place_ship(Ship.new("Barco", 2), [[0, 0], [0, 1]])
+
+    assert_raises(ArgumentError) do
+      Game.new(
+        player_board: wrong_size,
+        enemy_board: configured_board(:oceano),
+        map_type: :oceano
+      )
+    end
+    assert_raises(ArgumentError) do
+      Game.new(
+        player_board: incomplete_fleet,
+        enemy_board: configured_board(:oceano),
+        map_type: :oceano
+      )
     end
   end
 
   def test_requires_distinct_boards_with_the_same_size
-    board = board_with_ships([[[0, 0]]])
+    board = configured_board
     smaller_board = Board.new(2)
     smaller_board.place_ship(Ship.new("Navio", 1), [[0, 0]])
 
@@ -60,8 +81,8 @@ class GameTest < Minitest::Test
   end
 
   def test_requires_independent_inventories_from_the_selected_map
-    player_board = board_with_ships([[[0, 0]]])
-    enemy_board = board_with_ships([[[1, 1]]])
+    player_board = configured_board
+    enemy_board = configured_board
     shared_inventory = WeaponInventory.for_map(:poca)
 
     assert_raises(ArgumentError) do
@@ -93,8 +114,8 @@ class GameTest < Minitest::Test
 
     expected_strategies.each do |map_type, strategy_class|
       game = Game.new(
-        player_board: board_with_ships([[[0, 0]]]),
-        enemy_board: board_with_ships([[[1, 1]]]),
+        player_board: configured_board(map_type),
+        enemy_board: configured_board(map_type),
         map_type: map_type
       )
 
@@ -103,10 +124,7 @@ class GameTest < Minitest::Test
   end
 
   def test_single_shot_changes_turn_even_after_a_hit
-    game = build_game(
-      player_ships: [[[2, 1], [2, 2]]],
-      enemy_ships: [[[0, 0], [0, 1]]]
-    )
+    game = build_game
 
     event = game.player_attack(0, 0)
 
@@ -118,12 +136,15 @@ class GameTest < Minitest::Test
   end
 
   def test_extra_shot_uses_any_hit_from_a_mixed_area_result
-    game = build_game(
-      player_ships: [[[2, 0], [2, 1]]],
-      enemy_ships: [
+    enemy_board = configured_board(
+      placements: [
         [[0, 0], [1, 0]],
-        [[2, 2]]
-      ],
+        [[4, 0], [4, 1], [4, 2]],
+        [[2, 1], [2, 2], [2, 3], [2, 4]]
+      ]
+    )
+    game = build_game(
+      enemy_board: enemy_board,
       turn_strategy: ExtraShotOnHitTurnStrategy.new
     )
 
@@ -136,12 +157,15 @@ class GameTest < Minitest::Test
   end
 
   def test_special_charge_is_consumed_only_after_a_valid_attack
+    enemy_board = configured_board(
+      placements: [
+        [[0, 0], [1, 0]],
+        [[4, 0], [4, 1], [4, 2]],
+        [[2, 1], [2, 2], [2, 3], [2, 4]]
+      ]
+    )
     game = build_game(
-      player_ships: [[[2, 0], [2, 1]]],
-      enemy_ships: [
-        [[0, 0]],
-        [[2, 2]]
-      ],
+      enemy_board: enemy_board,
       turn_strategy: ExtraShotOnHitTurnStrategy.new
     )
 
@@ -161,11 +185,6 @@ class GameTest < Minitest::Test
 
   def test_repeated_origin_and_invalid_orientation_do_not_consume_charges
     game = build_game(
-      player_ships: [[[2, 0], [2, 1]]],
-      enemy_ships: [
-        [[0, 0]],
-        [[2, 2]]
-      ],
       map_type: :lago,
       turn_strategy: ExtraShotOnHitTurnStrategy.new
     )
@@ -177,7 +196,7 @@ class GameTest < Minitest::Test
     assert_equal 1, game.player_inventory.remaining(:missile)
 
     assert_raises(ArgumentError) do
-      game.player_attack(2, 2, Airplane.new, orientation: :diagonal)
+      game.player_attack(7, 7, Airplane.new, orientation: :diagonal)
     end
     assert_equal 1, game.player_inventory.remaining(:airplane)
   end
@@ -185,11 +204,6 @@ class GameTest < Minitest::Test
   def test_computer_receives_its_inventory_and_can_spend_a_special_weapon
     ai = SpecialWeaponAI.new
     game = build_game(
-      player_ships: [
-        [[0, 0]],
-        [[2, 2]]
-      ],
-      enemy_ships: [[[1, 1]]],
       ai: ai,
       first_turn: :computer
     )
@@ -205,13 +219,14 @@ class GameTest < Minitest::Test
 
   def test_victory_freezes_duration_and_exposes_scoring_statistics
     clock_values = [10.0, 85.9]
+    enemy_board = configured_board
+    attack_all_ship_cells_except(enemy_board, [0, 0])
     game = build_game(
-      player_ships: [[[2, 2]]],
-      enemy_ships: [[[1, 1]]],
+      enemy_board: enemy_board,
       clock: -> { clock_values.shift }
     )
 
-    event = game.player_attack(1, 1)
+    event = game.player_attack(0, 0)
 
     assert event.game_over?
     assert_equal :victory, event.state
@@ -220,23 +235,24 @@ class GameTest < Minitest::Test
     assert_equal 75, game.duration_seconds
     assert_equal(
       {
-        hits: 1,
-        surviving_ships: 1,
-        remaining_ship_cells: 1,
+        hits: 9,
+        surviving_ships: 3,
+        remaining_ship_cells: 9,
         duration_seconds: 75
       },
       game.final_statistics
     )
     assert_equal :vitoria, game.result
-    assert_equal 575, ScoreCalculator.calculate(**game.final_statistics)
+    assert_equal 2_775, ScoreCalculator.calculate(**game.final_statistics)
     assert_raises(Game::GameFinishedError) { game.player_attack(0, 0) }
   end
 
   def test_computer_can_finish_the_game_with_defeat
+    player_board = configured_board
+    attack_all_ship_cells_except(player_board, [0, 0])
     game = build_game(
-      player_ships: [[[1, 1]]],
-      enemy_ships: [[[2, 2]]],
-      ai: SequenceAI.new([1, 1]),
+      player_board: player_board,
+      ai: SequenceAI.new([0, 0]),
       first_turn: :computer
     )
 
@@ -252,20 +268,14 @@ class GameTest < Minitest::Test
   end
 
   def test_rejects_action_from_the_wrong_turn_and_early_statistics
-    game = build_game(
-      player_ships: [[[2, 2]]],
-      enemy_ships: [[[0, 0]]]
-    )
+    game = build_game
 
     assert_raises(Game::InvalidTurnError) { game.computer_attack }
     assert_raises(Game::GameNotFinishedError) { game.final_statistics }
   end
 
   def test_history_uses_coordinate_snapshots_instead_of_mutable_cells
-    game = build_game(
-      player_ships: [[[2, 1], [2, 2]]],
-      enemy_ships: [[[0, 0], [0, 1]]]
-    )
+    game = build_game
 
     event = game.player_attack(0, 0)
 
@@ -281,32 +291,22 @@ class GameTest < Minitest::Test
   private
 
   def build_game(
-    player_ships:,
-    enemy_ships:,
     map_type: :poca,
+    player_board: nil,
+    enemy_board: nil,
     turn_strategy: SingleShotTurnStrategy.new,
     ai: RandomAI.new(random: Random.new(7)),
     first_turn: :player,
     clock: nil
   )
     Game.new(
-      player_board: board_with_ships(player_ships),
-      enemy_board: board_with_ships(enemy_ships),
+      player_board: player_board || configured_board(map_type),
+      enemy_board: enemy_board || configured_board(map_type),
       map_type: map_type,
       turn_strategy: turn_strategy,
       ai: ai,
       first_turn: first_turn,
       clock: clock
     )
-  end
-
-  def board_with_ships(ship_coordinates)
-    board = Board.new(3)
-
-    ship_coordinates.each_with_index do |coordinates, index|
-      board.place_ship(Ship.new("Navio #{index}", coordinates.length), coordinates)
-    end
-
-    board
   end
 end

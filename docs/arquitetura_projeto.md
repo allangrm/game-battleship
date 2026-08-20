@@ -170,7 +170,11 @@ O `WeaponInventory` mantém cargas independentes para jogador e computador:
 | Lago | 2 | 1 |
 | Oceano | 3 | 1 |
 
-Uma carga só é consumida após um ataque válido. As estratégias atuais da IA escolhem apenas `BasicShot`, embora o contrato aceite o inventário para uma evolução futura com Míssil e Avião.
+Uma carga só é consumida após um ataque válido. A IA fácil preserva o ataque
+básico; a média usa armas especiais para explorar acertos visíveis; e a difícil
+também as utiliza proativamente nas áreas com maior cobertura ainda disponível.
+O contrato completo de prioridade e fallback está em
+[`contrato_p2.md`](./contrato_p2.md).
 
 ## 9. Turnos e IA
 
@@ -187,9 +191,9 @@ Quando nenhuma IA é injetada explicitamente, `Game` usa `AIFactory` para seleci
 
 | Mapa | Dificuldade | Estratégia | Comportamento |
 |---|---|---|---|
-| Poça | Fácil | `RandomAI` | Escolha aleatória entre células ainda não atacadas |
-| Lago | Média | `HuntTargetAI` | Persegue células ortogonais após um acerto |
-| Oceano | Difícil | `StrategicAI` | Prolonga acertos alinhados e usa busca quadriculada |
+| Poça | Fácil | `RandomAI` | Escolha aleatória e somente tiro básico |
+| Lago | Média | `HuntTargetAI` | Persegue acertos e usa especiais apenas com evidência visível |
+| Oceano | Difícil | `StrategicAI` | Prolonga acertos, usa busca quadriculada e especiais proativamente |
 
 As três estratégias evitam coordenadas repetidas e consultam apenas informações já visíveis no tabuleiro. Nenhuma usa `cell.ship` ou `cell.occupied?` para descobrir posições ocultas. O `GameController` continua executando ações automáticas enquanto o turno pertencer ao computador ou até a partida terminar.
 
@@ -375,8 +379,8 @@ A descrição detalhada permanece em [divisao.md](./divisao.md).
 
 Em 20 de agosto de 2026, a suíte automatizada possui:
 
-- 69 testes;
-- 317 asserções;
+- 91 testes;
+- 398 asserções;
 - nenhuma falha, erro ou teste ignorado;
 - execução aprovada com warnings do Ruby habilitados.
 
@@ -386,7 +390,9 @@ A cobertura automatizada inclui:
 - armas, áreas, repetição e afundamento;
 - inventários e limites por mapa;
 - IA sem repetição;
-- três dificuldades de IA, perseguição de acertos, busca direcional e busca quadriculada;
+- três dificuldades de IA, perseguição de acertos, busca direcional, busca
+  quadriculada e política de armas especiais;
+- compatibilidade estrita entre `Game`, mapa, tamanho de tabuleiro e frota;
 - dois modos de turno;
 - vitória, derrota, duração, histórico e estatísticas finais;
 - controller de partida;

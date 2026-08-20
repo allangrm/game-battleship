@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "controllers/attack_handler"
+require_relative "models/map_config"
 require_relative "turn_strategies/single_shot"
 require_relative "ai/ai_factory"
 require_relative "weapons/weapon_inventory"
@@ -9,7 +10,7 @@ require_relative "weapons/weapon_inventory"
 # Toda alteração de Cell/Ship continua delegada ao Board via AttackHandler.
 #
 # @author Júlio Pedro
-# @version 1.2
+# @version 1.3
 class Game
   class InvalidTurnError < StandardError; end
   class GameFinishedError < StandardError; end
@@ -60,13 +61,13 @@ class Game
     first_turn: :player,
     clock: nil
   )
-    validate_board!(:player_board, player_board)
-    validate_board!(:enemy_board, enemy_board)
+    map_config = MapConfig.new(normalize_map_type(map_type))
+    validate_board!(:player_board, player_board, map_config)
+    validate_board!(:enemy_board, enemy_board, map_config)
     raise ArgumentError, "Os tabuleiros precisam ser objetos diferentes" if player_board.equal?(enemy_board)
-    raise ArgumentError, "Os tabuleiros precisam ter o mesmo tamanho" unless player_board.size == enemy_board.size
 
-    default_player_inventory = WeaponInventory.for_map(map_type)
-    @map_type = default_player_inventory.map_type
+    @map_type = map_config.map_type
+    default_player_inventory = WeaponInventory.for_map(@map_type)
     @player_inventory = player_inventory || default_player_inventory
     @computer_inventory = computer_inventory || WeaponInventory.for_map(@map_type)
     validate_inventory!(:player_inventory, @player_inventory)
@@ -240,9 +241,14 @@ class Game
     actor == :player ? :computer : :player
   end
 
-  def validate_board!(name, board)
-    raise ArgumentError, "#{name} precisa ser um Board" unless board.is_a?(Board)
-    raise ArgumentError, "#{name} precisa ter ao menos um navio posicionado" if board.ships.empty?
+  def validate_board!(name, board, map_config)
+    map_config.validate_board!(board)
+  rescue ArgumentError => error
+    raise ArgumentError, "#{name} inválido: #{error.message}"
+  end
+
+  def normalize_map_type(map_type)
+    map_type.to_s.strip.to_sym
   end
 
   def validate_collaborator!(name, collaborator, method_name)

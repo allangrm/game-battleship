@@ -7,11 +7,18 @@ require_relative "hunt_target_ai"
 # Não consulta navios ou células ocupadas ainda ocultas do jogador.
 #
 # @author Júlio Pedro
-# @version 1.0
+# @version 1.1
 class StrategicAI < HuntTargetAI
   def choose_attack(board, inventory: nil)
     cells = available_cells(board)
     ensure_available_coordinate!(cells)
+
+    special_decision = airplane_decision_for_aligned_hits(board, inventory) ||
+                       missile_decision_near_visible_hit(board, inventory) ||
+                       airplane_decision_for_visible_hit(board, inventory) ||
+                       best_airplane_decision(board, inventory) ||
+                       best_missile_decision(board, inventory)
+    return special_decision if special_decision
 
     target = random_cell(aligned_extension_candidates(board)) ||
              random_cell(hunt_candidates(board)) ||

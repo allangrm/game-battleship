@@ -1,13 +1,16 @@
 # frozen_string_literal: true
 
 require_relative "../weapons/basic_shot"
+require_relative "special_weapon_targeting"
 
 # Oponente simples que escolhe aleatoriamente uma célula ainda não atacada.
 # O Board permanece como fonte de verdade do histórico de coordenadas.
 #
 # @author Júlio Pedro
-# @version 1.2
+# @version 1.3
 class RandomAI
+  include SpecialWeaponTargeting
+
   class NoAvailableCoordinateError < StandardError; end
 
   Decision = Struct.new(:row, :col, :weapon, :options, keyword_init: true)
@@ -41,12 +44,12 @@ class RandomAI
     cells.sample(random: random)
   end
 
-  def decision_for(cell)
+  def decision_for(cell, weapon: BasicShot.new, options: {})
     Decision.new(
       row: cell.row,
       col: cell.col,
-      weapon: BasicShot.new,
-      options: {}
+      weapon: weapon,
+      options: options.freeze
     ).freeze
   end
 end
