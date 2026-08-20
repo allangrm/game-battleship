@@ -61,6 +61,23 @@ class MapConfig
     fleet_config.map { |ship| Ship.new(ship[:name], ship[:size]) }
   end
 
+  def expected_fleet_sizes
+    fleet_config.map { |ship| ship[:size] }.sort.freeze
+  end
+
+  def valid_board?(board)
+    board.is_a?(Board) &&
+      board.size == board_size &&
+      board.ships.all?(&:placed?) &&
+      board.ships.map(&:size).sort == expected_fleet_sizes
+  end
+
+  def validate_board!(board)
+    return true if valid_board?(board)
+
+    raise ArgumentError, "Tabuleiro incompatível com o mapa #{name}"
+  end
+
   def create_board
     Board.new(board_size)
   end
