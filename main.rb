@@ -1,2 +1,5 @@
 # frozen_string_literal: true
-puts('hello world')
+
+require_relative "app/views/main_window"
+
+MainWindow.new.show if $PROGRAM_NAME == __FILE__
