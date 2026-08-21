@@ -4,6 +4,7 @@ require "gosu"
 require_relative "../controllers/menu_controller"
 require_relative "../controllers/setup_controller"
 require_relative "../controllers/post_game_controller"
+require_relative "../controllers/ranking_controller"
 
 require_relative "menu_view"
 require_relative "options_menu_view"
@@ -94,7 +95,11 @@ class MainWindow < Gosu::Window
         persistence_error: options[:persistence_error]
       )
     when :ranking
-      RankingView.new(self, map_type: options[:map_type])
+      ranking_controller = RankingController.new(
+        map_type: options[:map_type]
+      )
+
+      RankingView.new(self, ranking_controller)
     when :instructions
       pending_view("Instruções", "A tela completa de instruções será implementada depois do menu.")
     else
