@@ -23,10 +23,18 @@ class MainWindow < Gosu::Window
   WIDTH = 1_408
   HEIGHT = 768
   TITLE = "Batalha Naval"
+  SOUNDTRACK_PATH = File.expand_path(
+    "../../shared/soundtrack/Black-Tide-Command.ogg",
+    __dir__
+  )
 
   def initialize
     super(WIDTH, HEIGHT, fullscreen: true)
     self.caption = TITLE
+
+    @background_music = Gosu::Song.new(SOUNDTRACK_PATH)
+    @background_music.volume = 0.35
+    @background_music.play(true)
 
     @menu_controller = MenuController.new(self)
     @post_game_controller = PostGameController.new(self)

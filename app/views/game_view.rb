@@ -3,6 +3,8 @@
 require "gosu"
 require_relative "components/message_box"
 require_relative "components/board_renderer"
+require_relative "components/airplane_attack_effect"
+require_relative "components/missile_attack_effect"
 require_relative "../weapons/basic_shot"
 require_relative "../weapons/missile"
 require_relative "../weapons/airplane"
@@ -44,6 +46,7 @@ class GameView
     @map_type = map_type
     @on_game_over = on_game_over
     @game_over_notified = false
+    @pending_game_over = false
 
     @background = load_background(map_type)
     @back_image = Gosu::Image.new(
@@ -55,6 +58,8 @@ class GameView
     @airplane_orientation = :row
     @missile_image = load_image("botao_missil.png")
     @airplane_image = load_image("botao_aviao.png")
+    @airplane_attack_effect = AirplaneAttackEffect.new(load_image("aviao.png"))
+    @missile_attack_effect = MissileAttackEffect.new(load_image("missil.png"))
     @special_title_font = Gosu::Font.new(17)
     @special_counter_font = Gosu::Font.new(16)
     @orientation_font = Gosu::Font.new(15)
@@ -91,9 +96,17 @@ class GameView
       enemy_x,
       @selected_enemy_coordinate
     )
+    @airplane_attack_effect.draw
+    @missile_attack_effect.draw
     draw_special_weapon_controls
     @message_box.draw
     draw_back_button
+  end
+
+  def update
+    @airplane_attack_effect.update
+    @missile_attack_effect.update
+    notify_pending_game_over
   end
 
   def button_down(id, mouse_x, mouse_y)
@@ -113,6 +126,11 @@ class GameView
 
     if weapon_action
       handle_weapon_action(weapon_action)
+      return
+    end
+
+    if attack_effect_active?
+      @message_box.add("Aguarde a animação do ataque terminar.")
       return
     end
 
@@ -194,6 +212,9 @@ class GameView
       **options
     )
 
+    start_airplane_attack_effect(row, col) if weapon.is_a?(Airplane)
+    start_missile_attack_effect(row, col) if weapon.is_a?(Missile)
+
     events.each do |event|
       print_attack_event(event)
     end
@@ -210,6 +231,35 @@ class GameView
     @message_box.add(message)
   ensure
     @selected_enemy_coordinate = nil
+  end
+
+  def start_airplane_attack_effect(row, col)
+    enemy_board = @controller.game.enemy_board
+    _player_x, enemy_x = @board_renderer.origins(enemy_board.size)
+
+    @airplane_attack_effect.start(
+      board_size: enemy_board.size,
+      board_x: enemy_x,
+      row: row,
+      col: col,
+      orientation: @airplane_orientation
+    )
+  end
+
+  def start_missile_attack_effect(row, col)
+    enemy_board = @controller.game.enemy_board
+    _player_x, enemy_x = @board_renderer.origins(enemy_board.size)
+    target_cells = Missile.new.target_cells(row, col, enemy_board)
+
+    @missile_attack_effect.start(
+      board_size: enemy_board.size,
+      board_x: enemy_x,
+      target_cells: target_cells
+    )
+  end
+
+  def attack_effect_active?
+    @airplane_attack_effect.active? || @missile_attack_effect.active?
   end
 
   def print_attack_event(event)
@@ -251,6 +301,25 @@ class GameView
   def notify_game_over(events)
     return if @game_over_notified
     return unless events.any?(&:game_over?)
+
+    if attack_effect_active?
+      @pending_game_over = true
+      return
+    end
+
+    complete_game_over_notification
+  end
+
+  def notify_pending_game_over
+    return unless @pending_game_over
+    return if attack_effect_active?
+
+    @pending_game_over = false
+    complete_game_over_notification
+  end
+
+  def complete_game_over_notification
+    return if @game_over_notified
 
     @game_over_notified = true
     @on_game_over&.call(@controller.game)
