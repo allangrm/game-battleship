@@ -4,6 +4,7 @@ require "gosu"
 require_relative "../controllers/menu_controller"
 require_relative "../controllers/setup_controller"
 require_relative "../controllers/post_game_controller"
+require_relative "../controllers/ranking_controller"
 
 require_relative "menu_view"
 require_relative "options_menu_view"
@@ -25,7 +26,7 @@ class MainWindow < Gosu::Window
   TITLE = "Batalha Naval"
 
   def initialize
-    super(WIDTH, HEIGHT)
+    super(WIDTH, HEIGHT, fullscreen: true)
     self.caption = TITLE
 
     @menu_controller = MenuController.new(self)
@@ -46,6 +47,7 @@ class MainWindow < Gosu::Window
   end
 
   def button_down(id)
+    super
     @active_view.button_down(id, mouse_x, mouse_y)
   end
 
@@ -88,10 +90,17 @@ class MainWindow < Gosu::Window
       GameOverView.new(
         self,
         game: options.fetch(:game),
-        player: options[:player]
+        player: options[:player],
+        score: options.fetch(:score),
+        saved_match_id: options[:saved_match_id],
+        persistence_error: options[:persistence_error]
       )
     when :ranking
-      RankingView.new(self, map_type: options[:map_type])
+      ranking_controller = RankingController.new(
+        map_type: options[:map_type]
+      )
+
+      RankingView.new(self, ranking_controller)
     when :instructions
       pending_view("Instruções", "A tela completa de instruções será implementada depois do menu.")
     else

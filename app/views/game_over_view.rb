@@ -2,9 +2,9 @@
 
 require "gosu"
 
-# Contrato visual mínimo de pós-partida. Recebe Game e Player prontos para que
-# a Pessoa 4 acrescente pontuação, persistência e apresentação final sem mudar
-# o fluxo de navegação.
+# Exibe o resultado final já calculado pelo PostGameController. Em vitórias, o
+# controller também entrega o identificador da partida persistida ou uma
+# mensagem de erro caso o banco não tenha podido ser atualizado.
 #
 # @author Lívia Ferreira
 # @version 1.0
@@ -15,17 +15,28 @@ class GameOverView
   RANKING_X = 920
   RANKING_Y = 490
 
-  attr_reader :game, :player
+  attr_reader :game, :player, :score, :saved_match_id, :persistence_error
 
-  def initialize(window, game:, player: nil)
+  def initialize(
+    window,
+    game:,
+    player: nil,
+    score:,
+    saved_match_id: nil,
+    persistence_error: nil
+  )
     @window = window
     @game = game
     @player = player
+    @score = score
+    @saved_match_id = saved_match_id
+    @persistence_error = persistence_error
     @background = load_image("fundo_ranking.png")
     @back_image = load_image("botao_voltar_play.png")
     @ranking_image = load_image("botao_ranking.png")
     @title_font = Gosu::Font.new(46)
     @text_font = Gosu::Font.new(26)
+    @small_font = Gosu::Font.new(18)
   end
 
   def draw
@@ -37,7 +48,9 @@ class GameOverView
     color = game.victory? ? Gosu::Color::YELLOW : Gosu::Color::WHITE
     draw_centered(@title_font, result, 230, color)
     draw_centered(@text_font, "Jogador: #{player.name}", 310, Gosu::Color::WHITE) if player
-    draw_centered(@text_font, "Duração: #{game.duration_seconds}s", 355, Gosu::Color::WHITE)
+    draw_centered(@text_font, "Pontuação: #{score}", 355, Gosu::Color::YELLOW)
+    draw_centered(@text_font, "Duração: #{game.duration_seconds}s", 400, Gosu::Color::WHITE)
+    draw_persistence_status
   end
 
   def button_down(id, mouse_x, mouse_y)
@@ -52,6 +65,19 @@ class GameOverView
   end
 
   private
+
+  def draw_persistence_status
+    if persistence_error
+      draw_centered(
+        @small_font,
+        "Pontuação calculada, mas não foi possível salvar: #{persistence_error}",
+        450,
+        Gosu::Color::RED
+      )
+    elsif saved_match_id
+      draw_centered(@small_font, "Resultado salvo no ranking.", 450, Gosu::Color::GREEN)
+    end
+  end
 
   def go_back
     @window.navigate_to(:map_menu)
