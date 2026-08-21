@@ -6,7 +6,7 @@ require "gosu"
 # As ações são encaminhadas ao controller, sem montar a partida na view.
 #
 # @author Lívia Ferreira
-# @version 1.2
+# @version 1.3
 class MenuView
   ASSET_PATH = File.expand_path("../models/images", __dir__)
 
@@ -14,8 +14,10 @@ class MenuView
   PLAY_Y = 347
   RANKING_X = 920
   RANKING_Y = 490
-  MENU_X = 748
-  MENU_Y = 347
+  INSTRUCTIONS_X = 748
+  INSTRUCTIONS_Y = 351
+  INSTRUCTIONS_WIDTH = 300
+  INSTRUCTIONS_HEIGHT = 147
   EXIT_X = 1_270
   EXIT_Y = 650
   BACK_X = 23
@@ -77,7 +79,7 @@ class MenuView
     @menu_background = load_image("fundo_menu.png")
     @play_image = load_image("play.png")
     @ranking_image = load_image("botao_ranking.png")
-    @menu_image = load_image("botao_menu.png")
+    @instructions_image = load_image("botao_instru\u00E7\u00F5es.png")
     @exit_image = load_image("botao_sair.png")
     @back_image = load_image("botao_voltar_play.png")
 
@@ -87,17 +89,19 @@ class MenuView
       oceano: load_image("botao_oceano.png")
     }
 
-    # Este asset ainda não existe. A rota correspondente permanece disponível
-    # no MenuController para ser conectada quando a arte for adicionada.
-    # @instructions_image = load_image("botao_instrucoes.png")
-
     @message_font = Gosu::Font.new(24)
   end
 
   def configure_buttons
     @play_button = image_button(@play_image, PLAY_X, PLAY_Y)
     @ranking_button = image_button(@ranking_image, RANKING_X, RANKING_Y)
-    @menu_button = image_button(@menu_image, MENU_X, MENU_Y)
+    @instructions_button = image_button(
+      @instructions_image,
+      INSTRUCTIONS_X,
+      INSTRUCTIONS_Y,
+      width: INSTRUCTIONS_WIDTH,
+      height: INSTRUCTIONS_HEIGHT
+    )
     @exit_button = image_button(@exit_image, EXIT_X, EXIT_Y)
     @back_button = image_button(@back_image, BACK_X, BACK_Y)
 
@@ -109,7 +113,7 @@ class MenuView
   def draw_cover
     @cover_background.draw(0, 0, 0)
     draw_image_button(@play_button)
-    draw_image_button(@menu_button)
+    draw_image_button(@instructions_button)
     draw_image_button(@ranking_button)
     draw_image_button(@exit_button)
   end
@@ -153,8 +157,8 @@ class MenuView
   def handle_cover_click(mouse_x, mouse_y)
     if clicked_image?(@play_button, mouse_x, mouse_y)
       @controller.handle(:start_game)
-    elsif clicked_image?(@menu_button, mouse_x, mouse_y)
-      @controller.handle(:show_options_menu)
+    elsif clicked_image?(@instructions_button, mouse_x, mouse_y)
+      @controller.handle(:show_instructions)
     elsif clicked_image?(@ranking_button, mouse_x, mouse_y)
       @controller.handle(:show_ranking)
     elsif clicked_image?(@exit_button, mouse_x, mouse_y)
@@ -175,26 +179,40 @@ class MenuView
     end
   end
 
-  def image_button(image, x, y)
-    { image: image, x: x, y: y }
+  def image_button(image, x, y, width: image.width, height: image.height)
+    {
+      image: image,
+      x: x,
+      y: y,
+      width: width,
+      height: height,
+      scale_x: width.to_f / image.width,
+      scale_y: height.to_f / image.height
+    }
   end
 
   def draw_image_button(button)
-    button[:image].draw(button[:x], button[:y], 1)
+    button[:image].draw(
+      button[:x],
+      button[:y],
+      1,
+      button[:scale_x],
+      button[:scale_y]
+    )
     draw_button_glow(button) if hovered?(button)
   end
 
   def draw_button_glow(button)
     image = button[:image]
-    offset_x = image.width * (HOVER_SCALE - 1) / 2
-    offset_y = image.height * (HOVER_SCALE - 1) / 2
+    offset_x = button[:width] * (HOVER_SCALE - 1) / 2
+    offset_y = button[:height] * (HOVER_SCALE - 1) / 2
 
     image.draw(
       button[:x] - offset_x,
       button[:y] - offset_y,
       2,
-      HOVER_SCALE,
-      HOVER_SCALE,
+      button[:scale_x] * HOVER_SCALE,
+      button[:scale_y] * HOVER_SCALE,
       HOVER_COLOR,
       :additive
     )
@@ -206,9 +224,9 @@ class MenuView
 
   def clicked_image?(button, mouse_x, mouse_y)
     mouse_x >= button[:x] &&
-      mouse_x < button[:x] + button[:image].width &&
+      mouse_x < button[:x] + button[:width] &&
       mouse_y >= button[:y] &&
-      mouse_y < button[:y] + button[:image].height
+      mouse_y < button[:y] + button[:height]
   end
 
   def load_image(name)

@@ -7,19 +7,18 @@ require_relative "../controllers/post_game_controller"
 require_relative "../controllers/ranking_controller"
 
 require_relative "menu_view"
-require_relative "options_menu_view"
+require_relative "instructions_view"
 require_relative "ranking_view"
 require_relative "game_view"
 require_relative "setup_view"
 require_relative "name_view"
 require_relative "game_over_view"
-require_relative "placeholder_view"
 
 # Janela principal do jogo. Mantém apenas a view ativa e delega a ela os
 # eventos do Gosu.
 #
 # @author Lívia Ferreira
-# @version 1.1
+# @version 1.2
 class MainWindow < Gosu::Window
   WIDTH = 1_408
   HEIGHT = 768
@@ -67,8 +66,8 @@ class MainWindow < Gosu::Window
       MenuView.new(self, @menu_controller)
     when :map_menu
       MenuView.new(self, @menu_controller, screen: :map_menu)
-    when :options_menu
-      OptionsMenuView.new(self)
+    when :options_menu, :instructions
+      InstructionsView.new(self)
     when :setup
       setup_controller = SetupController.new(self, map_type: options.fetch(:map_type))
       SetupView.new(self, setup_controller)
@@ -101,14 +100,8 @@ class MainWindow < Gosu::Window
       )
 
       RankingView.new(self, ranking_controller)
-    when :instructions
-      pending_view("Instruções", "A tela completa de instruções será implementada depois do menu.")
     else
       raise ArgumentError, "Tela inválida: #{screen.inspect}"
     end
-  end
-
-  def pending_view(title, message)
-    PlaceholderView.new(self, title, message)
   end
 end
