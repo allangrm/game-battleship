@@ -9,6 +9,11 @@ require_relative "../weapons/basic_shot"
 require_relative "../weapons/missile"
 require_relative "../weapons/airplane"
 
+# Mostra a partida, os tabuleiros e os controles usados pelo jogador.
+# Também apresenta as mensagens e os efeitos visuais de cada ataque.
+#
+# @author Raffael Wagner
+# @version 1.3
 class GameView
   ASSET_PATH = File.expand_path("../models/images", __dir__)
   SOUND_PATH = File.expand_path("../../shared/soundtrack", __dir__)
@@ -36,7 +41,13 @@ class GameView
   ORIENTATION_COLOR = Gosu::Color.rgba(25, 25, 25, 220)
   ORIENTATION_SELECTED_COLOR = Gosu::Color.rgba(155, 105, 25, 235)
 
-
+  # Cria a tela da partida e carrega imagens, sons e efeitos visuais.
+  #
+  # @param window [MainWindow] janela principal do jogo
+  # @param controller [GameController] controller da partida atual
+  # @param map_type [Symbol] mapa escolhido pelo jogador
+  # @param on_game_over [#call, nil] ação executada no fim da partida
+  # @return [GameView] tela criada
   def initialize(window, controller, map_type:, on_game_over: nil)
     if on_game_over && !on_game_over.respond_to?(:call)
       raise ArgumentError, "on_game_over precisa responder a #call"
@@ -72,6 +83,9 @@ class GameView
     @message_box = MessageBox.new(window)
   end
 
+  # Desenha os tabuleiros, controles, efeitos e mensagens da partida.
+  #
+  # @return [void]
   def draw
     draw_background
 
@@ -106,12 +120,21 @@ class GameView
     draw_back_button
   end
 
+  # Atualiza as animações e conclui um fim de jogo que estava aguardando efeito.
+  #
+  # @return [void]
   def update
     @airplane_attack_effect.update
     @missile_attack_effect.update
     notify_pending_game_over
   end
 
+  # Trata teclado, botão Voltar, seleção de arma e clique de ataque.
+  #
+  # @param id [Integer] código da tecla ou botão pressionado
+  # @param mouse_x [Numeric] posição horizontal do mouse
+  # @param mouse_y [Numeric] posição vertical do mouse
+  # @return [void]
   def button_down(id, mouse_x, mouse_y)
     if id == Gosu::KB_ESCAPE
       go_back
@@ -142,6 +165,9 @@ class GameView
 
   private
 
+  # Desenha a imagem usada para voltar à seleção de mapas.
+  #
+  # @return [void]
   def draw_back_button
     @back_image.draw(
       BACK_X,
@@ -150,10 +176,18 @@ class GameView
     )
   end
 
+  # Sai da partida atual e volta para a seleção de mapas.
+  #
+  # @return [void]
   def go_back
     @window.navigate_to(:map_menu)
   end
 
+  # Verifica se o mouse está dentro do botão Voltar.
+  #
+  # @param mouse_x [Numeric] posição horizontal do mouse
+  # @param mouse_y [Numeric] posição vertical do mouse
+  # @return [Boolean] true quando o botão foi clicado
   def clicked_back_button?(mouse_x, mouse_y)
     mouse_x >= BACK_X &&
       mouse_x < BACK_X + @back_image.width &&
@@ -161,6 +195,11 @@ class GameView
       mouse_y < BACK_Y + @back_image.height
   end
 
+  # Carrega a imagem de fundo correspondente ao mapa atual.
+  #
+  # @param map_type [Symbol] mapa escolhido
+  # @return [Gosu::Image] imagem de fundo carregada
+  # @raise [ArgumentError] quando o mapa não possui fundo
   def load_background(map_type)
     file_name = BACKGROUND_FILES.fetch(map_type) do
       raise ArgumentError, "Fundo não encontrado para o mapa: #{map_type}"
@@ -171,6 +210,9 @@ class GameView
     )
   end
 
+  # Ajusta o fundo para preencher toda a janela.
+  #
+  # @return [void]
   def draw_background
     scale_x = @window.width.to_f / @background.width
     scale_y = @window.height.to_f / @background.height
@@ -185,6 +227,11 @@ class GameView
   end
 
 
+  # Converte o clique no tabuleiro inimigo em um ataque.
+  #
+  # @param mouse_x [Numeric] posição horizontal do mouse
+  # @param mouse_y [Numeric] posição vertical do mouse
+  # @return [void]
   def handle_enemy_board_click(mouse_x, mouse_y)
     enemy_board = @controller.game.enemy_board
     _player_x, enemy_x = @board_renderer.origins(enemy_board.size)
@@ -204,6 +251,11 @@ class GameView
     perform_player_attack(row, col)
   end
 
+  # Envia o ataque escolhido ao controller e processa seus eventos.
+  #
+  # @param row [Integer] linha atacada
+  # @param col [Integer] coluna atacada
+  # @return [void]
   def perform_player_attack(row, col)
     weapon = selected_weapon_instance
     options = selected_weapon_options
@@ -237,6 +289,11 @@ class GameView
     @selected_enemy_coordinate = nil
   end
 
+  # Inicia a animação do Avião na linha ou coluna escolhida.
+  #
+  # @param row [Integer] linha selecionada
+  # @param col [Integer] coluna selecionada
+  # @return [void]
   def start_airplane_attack_effect(row, col)
     enemy_board = @controller.game.enemy_board
     _player_x, enemy_x = @board_renderer.origins(enemy_board.size)
@@ -250,6 +307,11 @@ class GameView
     )
   end
 
+  # Inicia a queda do Míssil no centro da área atacada.
+  #
+  # @param row [Integer] linha usada como origem do ataque
+  # @param col [Integer] coluna usada como origem do ataque
+  # @return [void]
   def start_missile_attack_effect(row, col)
     enemy_board = @controller.game.enemy_board
     _player_x, enemy_x = @board_renderer.origins(enemy_board.size)
@@ -262,10 +324,17 @@ class GameView
     )
   end
 
+  # Confere se o Avião ou o Míssil ainda estão sendo animados.
+  #
+  # @return [Boolean] true enquanto algum efeito estiver ativo
   def attack_effect_active?
     @airplane_attack_effect.active? || @missile_attack_effect.active?
   end
 
+  # Transforma um evento de ataque em mensagens para o jogador.
+  #
+  # @param event [Game::AttackEvent] evento devolvido pelo jogo
+  # @return [void]
   def print_attack_event(event)
     actor =
       if event.actor == :player
@@ -302,6 +371,9 @@ class GameView
 
   # Ponto de integração com a navegação de P3 e as telas finais de P4. A view
   # apenas informa o encerramento; não cria Player, não calcula nem persiste.
+  #
+  # @param events [Array<Game::AttackEvent>] eventos da jogada atual
+  # @return [void]
   def notify_game_over(events)
     return if @game_over_notified
     return unless events.any?(&:game_over?)
@@ -314,6 +386,9 @@ class GameView
     complete_game_over_notification
   end
 
+  # Finaliza a navegação quando uma animação do último ataque termina.
+  #
+  # @return [void]
   def notify_pending_game_over
     return unless @pending_game_over
     return if attack_effect_active?
@@ -322,6 +397,9 @@ class GameView
     complete_game_over_notification
   end
 
+  # Executa o callback de encerramento uma única vez.
+  #
+  # @return [void]
   def complete_game_over_notification
     return if @game_over_notified
 
@@ -329,12 +407,21 @@ class GameView
     @on_game_over&.call(@controller.game)
   end
 
+  # Converte linha e coluna para um texto como A1 ou C4.
+  #
+  # @param row [Integer] índice da linha
+  # @param col [Integer] índice da coluna
+  # @return [String] coordenada formatada
   def formatted_coordinate(row, col)
     letter = ("A".ord + col).chr
 
     "#{letter}#{row + 1}"
   end
 
+  # Traduz o estado interno de uma célula para uma mensagem em português.
+  #
+  # @param status [Symbol] estado retornado pelo ataque
+  # @return [String] descrição mostrada na tela
   def translated_status(status)
     case status
     when :hit
@@ -348,6 +435,9 @@ class GameView
     end
   end
 
+  # Calcula o tamanho e a posição dos botões laterais de armas.
+  #
+  # @return [Hash] limites dos botões preparados
   def configure_special_weapon_buttons
     missile_button = special_weapon_button(@missile_image, SPECIAL_BUTTON_Y)
     airplane_y = missile_button[:y] + missile_button[:height] + SPECIAL_BUTTON_GAP
@@ -365,6 +455,11 @@ class GameView
     }
   end
 
+  # Cria os dados de posição e escala de um botão com imagem.
+  #
+  # @param image [Gosu::Image] imagem usada no botão
+  # @param y [Numeric] posição vertical do botão
+  # @return [Hash] imagem, posição, tamanho e escala
   def special_weapon_button(image, y)
     scale = SPECIAL_BUTTON_WIDTH.to_f / image.width
 
@@ -378,6 +473,9 @@ class GameView
     }
   end
 
+  # Desenha o painel, os botões das armas e o controle de orientação.
+  #
+  # @return [void]
   def draw_special_weapon_controls
     draw_special_panel
     @weapon_buttons.each do |weapon, button|
@@ -386,6 +484,9 @@ class GameView
     draw_orientation_button
   end
 
+  # Desenha o fundo escuro e informa qual arma está selecionada.
+  #
+  # @return [void]
   def draw_special_panel
     title = selected_weapon_label
     title_x = SPECIAL_BUTTON_X +
@@ -411,14 +512,26 @@ class GameView
     )
   end
 
+  # Carrega uma imagem da pasta de assets.
+  #
+  # @param name [String] nome do arquivo
+  # @return [Gosu::Image] imagem carregada
   def load_image(name)
     Gosu::Image.new(File.join(ASSET_PATH, name))
   end
 
+  # Carrega um efeito sonoro da pasta de trilhas.
+  #
+  # @param name [String] nome do arquivo de áudio
+  # @return [Gosu::Sample] efeito sonoro carregado
   def load_sound(name)
     Gosu::Sample.new(File.join(SOUND_PATH, name))
   end
 
+  # Toca o som do tiro básico ou das armas especiais.
+  #
+  # @param weapon [Weapon] arma usada no ataque
+  # @return [void]
   def play_attack_sound(weapon)
     if weapon.is_a?(BasicShot)
       @basic_shot_sound.play(0.5)
@@ -427,6 +540,11 @@ class GameView
     end
   end
 
+  # Desenha a imagem de uma arma e seu estado habilitado ou desabilitado.
+  #
+  # @param weapon [Symbol] identificador da arma
+  # @param button [Hash] dados visuais do botão
+  # @return [void]
   def draw_special_weapon_button(weapon, button)
     color = if player_inventory.available?(weapon)
               Gosu::Color::WHITE
@@ -445,6 +563,10 @@ class GameView
     draw_special_counter(weapon, button)
   end
 
+  # Desenha um brilho permanente ao redor da arma selecionada.
+  #
+  # @param button [Hash] dados visuais do botão
+  # @return [void]
   def draw_special_weapon_glow(button)
     offset_x = button[:width] * (SPECIAL_GLOW_SCALE - 1) / 2
     offset_y = button[:height] * (SPECIAL_GLOW_SCALE - 1) / 2
@@ -461,6 +583,11 @@ class GameView
     )
   end
 
+  # Desenha a quantidade restante sobre a imagem da arma.
+  #
+  # @param weapon [Symbol] :missile ou :airplane
+  # @param button [Hash] dados visuais do botão
+  # @return [void]
   def draw_special_counter(weapon, button)
     label = if weapon == :missile
               "#{player_inventory.remaining(:missile)}"
@@ -484,6 +611,9 @@ class GameView
     )
   end
 
+  # Desenha o botão que alterna o Avião entre linha e coluna.
+  #
+  # @return [void]
   def draw_orientation_button
     available = player_inventory.available?(:airplane)
     color = if !available
@@ -510,6 +640,9 @@ class GameView
     @orientation_font.draw_text(label, text_x, text_y, 6, 1, 1, Gosu::Color::WHITE)
   end
 
+  # Monta o texto que informa a arma selecionada atualmente.
+  #
+  # @return [String] nome da arma selecionada
   def selected_weapon_label
     case @selected_weapon
     when :missile
@@ -521,6 +654,11 @@ class GameView
     end
   end
 
+  # Descobre se o mouse está sobre alguma arma ou sobre a orientação.
+  #
+  # @param mouse_x [Numeric] posição horizontal do mouse
+  # @param mouse_y [Numeric] posição vertical do mouse
+  # @return [Symbol, nil] ação encontrada ou nil
   def weapon_action_at(mouse_x, mouse_y)
     return :orientation if inside_weapon_button?(@orientation_button, mouse_x, mouse_y)
 
@@ -531,6 +669,12 @@ class GameView
     match&.first
   end
 
+  # Verifica se o mouse está dentro dos limites de um botão.
+  #
+  # @param button [Hash] posição e tamanho do botão
+  # @param mouse_x [Numeric] posição horizontal do mouse
+  # @param mouse_y [Numeric] posição vertical do mouse
+  # @return [Boolean] true quando o mouse está dentro
   def inside_weapon_button?(button, mouse_x, mouse_y)
     mouse_x >= button[:x] &&
       mouse_x < button[:x] + button[:width] &&
@@ -538,6 +682,10 @@ class GameView
       mouse_y < button[:y] + button[:height]
   end
 
+  # Seleciona uma arma, volta ao tiro básico ou altera a orientação.
+  #
+  # @param action [Symbol] ação escolhida pelo clique
+  # @return [void]
   def handle_weapon_action(action)
     if action == :orientation
       toggle_airplane_orientation
@@ -558,6 +706,9 @@ class GameView
     end
   end
 
+  # Alterna a direção do Avião entre linha e coluna.
+  #
+  # @return [void]
   def toggle_airplane_orientation
     unless player_inventory.available?(:airplane)
       @message_box.add("O avião não possui cargas restantes.")
@@ -573,6 +724,9 @@ class GameView
     @message_box.add("Orientação do avião: #{orientation}.")
   end
 
+  # Cria o objeto da arma selecionada para enviar ao controller.
+  #
+  # @return [BasicShot, Missile, Airplane] arma pronta para uso
   def selected_weapon_instance
     case @selected_weapon
     when :basic_shot
@@ -584,12 +738,18 @@ class GameView
     end
   end
 
+  # Prepara as opções extras usadas pelo Avião.
+  #
+  # @return [Hash] orientação do Avião ou hash vazio
   def selected_weapon_options
     return {} unless @selected_weapon == :airplane
 
     { orientation: @airplane_orientation }
   end
 
+  # Volta ao tiro básico quando todas as cargas da arma acabam.
+  #
+  # @return [void]
   def select_basic_shot_if_unavailable
     return if player_inventory.available?(@selected_weapon)
 
@@ -597,10 +757,17 @@ class GameView
     @message_box.add("As cargas acabaram. Tiro básico selecionado.")
   end
 
+  # Facilita o acesso ao inventário de armas do jogador.
+  #
+  # @return [WeaponInventory] inventário da partida atual
   def player_inventory
     @controller.game.player_inventory
   end
 
+  # Traduz o identificador da arma para o nome mostrado na mensagem.
+  #
+  # @param action [Symbol] identificador da arma
+  # @return [String] nome em português
   def weapon_name(action)
     case action
     when :basic_shot

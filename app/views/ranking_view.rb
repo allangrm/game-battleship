@@ -49,6 +49,12 @@ class RankingView
 
   attr_reader :controller
 
+  # Cria a tela de ranking e prepara os botões dos mapas.
+  #
+  # @param window [MainWindow] janela principal do jogo
+  # @param controller [RankingController] controller com os resultados
+  # @return [RankingView] tela criada
+  # @raise [ArgumentError] quando o controller possui outro tipo
   def initialize(window, controller)
     unless controller.is_a?(RankingController)
       raise ArgumentError, "controller precisa ser um RankingController"
@@ -72,6 +78,9 @@ class RankingView
     configure_map_buttons
   end
 
+  # Desenha o fundo, os filtros e a tabela de pontuações.
+  #
+  # @return [void]
   def draw
     draw_background
     draw_back_button
@@ -80,6 +89,12 @@ class RankingView
     draw_ranking_table
   end
 
+  # Trata os cliques nos mapas, no botão Voltar e a tecla Esc.
+  #
+  # @param id [Integer] código da tecla ou botão pressionado
+  # @param mouse_x [Numeric] posição horizontal do mouse
+  # @param mouse_y [Numeric] posição vertical do mouse
+  # @return [void]
   def button_down(id, mouse_x, mouse_y)
     return go_back if id == Gosu::KB_ESCAPE
     return unless id == Gosu::MS_LEFT
@@ -93,12 +108,18 @@ class RankingView
     controller.select_map(selected_map) if selected_map
   end
 
+  # Devolve o mapa selecionado atualmente pelo controller.
+  #
+  # @return [Symbol] :poca, :lago ou :oceano
   def map_type
     controller.map_type
   end
 
   private
 
+  # Calcula a posição dos três botões de mapa no centro da tela.
+  #
+  # @return [Hash] limites de cada botão
   def configure_map_buttons
     total_width =
       (MAP_LABELS.length * TAB_WIDTH) +
@@ -119,6 +140,9 @@ class RankingView
     end
   end
 
+  # Ajusta o fundo para preencher a janela.
+  #
+  # @return [void]
   def draw_background
     scale_x = @window.width.to_f / @background.width
     scale_y = @window.height.to_f / @background.height
@@ -126,6 +150,9 @@ class RankingView
     @background.draw(0, 0, 0, scale_x, scale_y)
   end
 
+  # Desenha o título principal da tela.
+  #
+  # @return [void]
   def draw_title
     draw_centered_text(
       @title_font,
@@ -136,6 +163,9 @@ class RankingView
     )
   end
 
+  # Desenha os botões Poça, Lago e Oceano com seus estados visuais.
+  #
+  # @return [void]
   def draw_map_buttons
     @map_buttons.each do |map, button|
       color =
@@ -173,6 +203,9 @@ class RankingView
     end
   end
 
+  # Desenha o painel da tabela e suas entradas.
+  #
+  # @return [void]
   def draw_ranking_table
     Gosu.draw_rect(
       TABLE_X,
@@ -201,6 +234,9 @@ class RankingView
     end
   end
 
+  # Desenha os títulos das colunas da tabela.
+  #
+  # @return [void]
   def draw_table_header
     Gosu.draw_rect(
       TABLE_X + 15,
@@ -222,6 +258,11 @@ class RankingView
     )
   end
 
+  # Desenha uma linha do ranking.
+  #
+  # @param entry [Hash] resultado com nome, pontuação e duração
+  # @param index [Integer] posição da entrada na lista
+  # @return [void]
   def draw_ranking_entry(entry, index)
     y = FIRST_ROW_Y + (index * ROW_HEIGHT)
 
@@ -248,6 +289,16 @@ class RankingView
     )
   end
 
+  # Desenha os valores nas posições corretas de cada coluna.
+  #
+  # @param position [String] posição do jogador
+  # @param name [String] nome mostrado na linha
+  # @param score [String] pontuação mostrada
+  # @param duration [String] tempo formatado
+  # @param y [Numeric] posição vertical da linha
+  # @param font [Gosu::Font] fonte usada
+  # @param color [Gosu::Color] cor dos textos
+  # @return [void]
   def draw_columns(position:, name:, score:, duration:, y:, font:, color:)
     font.draw_text(position, TABLE_X + 35, y, 4, 1, 1, color)
     font.draw_text(name, TABLE_X + 130, y, 4, 1, 1, color)
@@ -255,6 +306,10 @@ class RankingView
     font.draw_text(duration, TABLE_X + 735, y, 4, 1, 1, color)
   end
 
+  # Encurta nomes grandes para não ultrapassarem a coluna.
+  #
+  # @param name [String] nome original do jogador
+  # @return [String] nome original ou reduzido com reticências
   def shortened_name(name)
     value = name.to_s
     return value if value.length <= 24
@@ -262,6 +317,10 @@ class RankingView
     "#{value[0, 21]}..."
   end
 
+  # Converte segundos para o formato minutos:segundos.
+  #
+  # @param seconds [Integer] duração total em segundos
+  # @return [String] tempo no formato MM:SS
   def format_duration(seconds)
     total_seconds = seconds.to_i
     minutes = total_seconds / 60
@@ -270,6 +329,11 @@ class RankingView
     format("%02d:%02d", minutes, remaining_seconds)
   end
 
+  # Descobre qual botão de mapa está abaixo do mouse.
+  #
+  # @param mouse_x [Numeric] posição horizontal do mouse
+  # @param mouse_y [Numeric] posição vertical do mouse
+  # @return [Symbol, nil] mapa encontrado ou nil
   def map_button_at(mouse_x, mouse_y)
     match = @map_buttons.find do |_map, button|
       inside_button?(button, mouse_x, mouse_y)
@@ -278,6 +342,12 @@ class RankingView
     match&.first
   end
 
+  # Verifica se uma posição está dentro de um botão retangular.
+  #
+  # @param button [Hash] limites do botão
+  # @param mouse_x [Numeric] posição horizontal do mouse
+  # @param mouse_y [Numeric] posição vertical do mouse
+  # @return [Boolean] true quando a posição está dentro
   def inside_button?(button, mouse_x, mouse_y)
     mouse_x >= button[:x] &&
       mouse_x < button[:x] + button[:width] &&
@@ -285,6 +355,9 @@ class RankingView
       mouse_y < button[:y] + button[:height]
   end
 
+  # Desenha o botão Voltar e o brilho quando o mouse passa por cima.
+  #
+  # @return [void]
   def draw_back_button
     @back_image.draw(BACK_X, BACK_Y, 4)
     return unless clicked_back?(@window.mouse_x, @window.mouse_y)
@@ -303,6 +376,11 @@ class RankingView
     )
   end
 
+  # Verifica se o botão Voltar foi clicado.
+  #
+  # @param mouse_x [Numeric] posição horizontal do mouse
+  # @param mouse_y [Numeric] posição vertical do mouse
+  # @return [Boolean] true quando o clique está no botão
   def clicked_back?(mouse_x, mouse_y)
     mouse_x >= @back_button[:x] &&
       mouse_x < @back_button[:x] + @back_image.width &&
@@ -310,15 +388,30 @@ class RankingView
       mouse_y < @back_button[:y] + @back_image.height
   end
 
+  # Desenha um texto centralizado na janela.
+  #
+  # @param font [Gosu::Font] fonte usada
+  # @param text [String] conteúdo mostrado
+  # @param y [Numeric] posição vertical
+  # @param color [Gosu::Color] cor do texto
+  # @param z [Numeric] camada de desenho
+  # @return [void]
   def draw_centered_text(font, text, y, color, z)
     x = (@window.width - font.text_width(text)) / 2
     font.draw_text(text, x, y, z, 1, 1, color)
   end
 
+  # Volta para o menu inicial.
+  #
+  # @return [void]
   def go_back
     @window.navigate_to(:menu)
   end
 
+  # Carrega uma imagem da pasta de assets.
+  #
+  # @param name [String] nome do arquivo de imagem
+  # @return [Gosu::Image] imagem carregada
   def load_image(name)
     Gosu::Image.new(File.join(ASSET_PATH, name))
   end

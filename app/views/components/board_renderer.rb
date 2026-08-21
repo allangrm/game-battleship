@@ -43,6 +43,10 @@ class BoardRenderer
   SHIP_THICKNESS_RATIO = 0.78
   SHIP_LENGTH_PADDING_RATIO = 0.04
 
+  # Prepara as fontes e imagens usadas para desenhar os tabuleiros.
+  #
+  # @param window [Gosu::Window] janela onde o tabuleiro será mostrado
+  # @return [BoardRenderer] renderizador criado
   def initialize(window)
     @window = window
     @title_font = Gosu::Font.new(26)
@@ -52,6 +56,10 @@ class BoardRenderer
     end
   end
 
+  # Calcula onde começam os tabuleiros do jogador e do inimigo.
+  #
+  # @param board_size [Integer] tamanho do tabuleiro
+  # @return [Array<Numeric>] posições horizontais dos dois tabuleiros
   def origins(board_size)
     current_cell_size = cell_size(board_size)
     board_width = board_size * current_cell_size
@@ -63,6 +71,13 @@ class BoardRenderer
     [player_x, enemy_x]
   end
 
+  # Desenha um tabuleiro completo, incluindo título, células e navios visíveis.
+  #
+  # @param board [Board] tabuleiro que será desenhado
+  # @param x [Numeric] posição horizontal inicial
+  # @param title [String] título mostrado acima do tabuleiro
+  # @param reveal_ships [Boolean] define se os navios devem aparecer
+  # @return [void]
   def draw(board, x, title:, reveal_ships:)
     current_cell_size = cell_size(board.size)
     board_width = board.size * current_cell_size
@@ -76,6 +91,13 @@ class BoardRenderer
     draw_cell_foregrounds(board, x, current_cell_size)
   end
 
+  # Converte a posição do mouse em uma coordenada do tabuleiro.
+  #
+  # @param mouse_x [Numeric] posição horizontal do mouse
+  # @param mouse_y [Numeric] posição vertical do mouse
+  # @param board [Board] tabuleiro usado no cálculo
+  # @param board_x [Numeric] posição horizontal inicial do tabuleiro
+  # @return [Array<Integer>, nil] linha e coluna ou nil quando está fora
   def coordinate_at(mouse_x, mouse_y, board, board_x)
     current_cell_size = cell_size(board.size)
     board_width = board.size * current_cell_size
@@ -97,6 +119,12 @@ class BoardRenderer
     [row, col]
   end
 
+  # Destaca a célula selecionada pelo jogador.
+  #
+  # @param board [Board] tabuleiro inimigo
+  # @param board_x [Numeric] posição horizontal inicial
+  # @param coordinate [Array<Integer>, nil] linha e coluna selecionadas
+  # @return [void]
   def draw_selection(board, board_x, coordinate)
     return unless coordinate
 
@@ -118,10 +146,19 @@ class BoardRenderer
 
   private
 
+  # Busca o tamanho visual de uma célula para cada mapa.
+  #
+  # @param board_size [Integer] tamanho do tabuleiro
+  # @return [Integer] tamanho da célula em pixels
   def cell_size(board_size)
     CELL_SIZES.fetch(board_size)
   end
 
+  # Desenha o painel transparente atrás de um tabuleiro.
+  #
+  # @param x [Numeric] posição horizontal do tabuleiro
+  # @param board_width [Numeric] largura total do tabuleiro
+  # @return [void]
   def draw_panel(x, board_width)
     panel_x = x - 40
     panel_y = BOARD_TOP - 80
@@ -138,6 +175,12 @@ class BoardRenderer
     )
   end
 
+  # Desenha o título centralizado acima do tabuleiro.
+  #
+  # @param title [String] texto do título
+  # @param x [Numeric] posição horizontal do tabuleiro
+  # @param board_width [Numeric] largura total do tabuleiro
+  # @return [void]
   def draw_title(title, x, board_width)
     text_x =
       x +
@@ -154,6 +197,12 @@ class BoardRenderer
     )
   end
 
+  # Desenha as letras das colunas e os números das linhas.
+  #
+  # @param board [Board] tabuleiro desenhado
+  # @param board_x [Numeric] posição horizontal inicial
+  # @param current_cell_size [Numeric] tamanho de cada célula
+  # @return [void]
   def draw_coordinates(board, board_x, current_cell_size)
     board.size.times do |index|
       draw_column_coordinate(
@@ -170,6 +219,12 @@ class BoardRenderer
     end
   end
 
+  # Desenha a letra correspondente a uma coluna.
+  #
+  # @param col [Integer] índice da coluna
+  # @param board_x [Numeric] posição horizontal inicial
+  # @param current_cell_size [Numeric] tamanho de cada célula
+  # @return [void]
   def draw_column_coordinate(col, board_x, current_cell_size)
     letter = ("A".ord + col).chr
     cell_x = board_x + (col * current_cell_size)
@@ -189,6 +244,12 @@ class BoardRenderer
     )
   end
 
+  # Desenha o número correspondente a uma linha.
+  #
+  # @param row [Integer] índice da linha
+  # @param board_x [Numeric] posição horizontal inicial
+  # @param current_cell_size [Numeric] tamanho de cada célula
+  # @return [void]
   def draw_row_coordinate(row, board_x, current_cell_size)
     number = (row + 1).to_s
     cell_y = BOARD_TOP + (row * current_cell_size)
@@ -210,6 +271,13 @@ class BoardRenderer
     )
   end
 
+  # Desenha o fundo de todas as células antes dos navios e marcações.
+  #
+  # @param board [Board] tabuleiro desenhado
+  # @param board_x [Numeric] posição horizontal inicial
+  # @param current_cell_size [Numeric] tamanho de cada célula
+  # @param reveal_ships [Boolean] informa se navios ocultos podem aparecer
+  # @return [void]
   def draw_cell_backgrounds(board, board_x, current_cell_size, reveal_ships)
     board.grid.each do |row|
       row.each do |cell|
@@ -218,6 +286,13 @@ class BoardRenderer
     end
   end
 
+  # Desenha a cor de fundo de uma célula.
+  #
+  # @param cell [Cell] célula desenhada
+  # @param board_x [Numeric] posição horizontal inicial
+  # @param current_cell_size [Numeric] tamanho da célula
+  # @param reveal_ships [Boolean] informa se os navios estão visíveis
+  # @return [void]
   def draw_cell_background(cell, board_x, current_cell_size, reveal_ships)
     cell_x = board_x + (cell.col * current_cell_size)
     cell_y = BOARD_TOP + (cell.row * current_cell_size)
@@ -234,6 +309,12 @@ class BoardRenderer
     )
   end
 
+  # Desenha todos os navios posicionados no tabuleiro aliado.
+  #
+  # @param board [Board] tabuleiro que contém os navios
+  # @param board_x [Numeric] posição horizontal inicial
+  # @param current_cell_size [Numeric] tamanho de cada célula
+  # @return [void]
   def draw_ships(board, board_x, current_cell_size)
     board.ships.each do |ship|
       image = @ship_images[ship.name]
@@ -243,6 +324,13 @@ class BoardRenderer
     end
   end
 
+  # Ajusta a imagem de um navio ao tamanho e à orientação das suas células.
+  #
+  # @param ship [Ship] navio que será mostrado
+  # @param image [Gosu::Image] imagem correspondente ao navio
+  # @param board_x [Numeric] posição horizontal inicial
+  # @param current_cell_size [Numeric] tamanho de cada célula
+  # @return [void]
   def draw_ship(ship, image, board_x, current_cell_size)
     rows = ship.cells.map(&:row)
     columns = ship.cells.map(&:col)
@@ -278,6 +366,12 @@ class BoardRenderer
     )
   end
 
+  # Desenha bordas e marcações por cima de todas as células.
+  #
+  # @param board [Board] tabuleiro desenhado
+  # @param board_x [Numeric] posição horizontal inicial
+  # @param current_cell_size [Numeric] tamanho de cada célula
+  # @return [void]
   def draw_cell_foregrounds(board, board_x, current_cell_size)
     board.grid.each do |row|
       row.each do |cell|
@@ -286,6 +380,12 @@ class BoardRenderer
     end
   end
 
+  # Desenha o estado e a borda de uma célula.
+  #
+  # @param cell [Cell] célula desenhada
+  # @param board_x [Numeric] posição horizontal inicial
+  # @param current_cell_size [Numeric] tamanho da célula
+  # @return [void]
   def draw_cell_foreground(cell, board_x, current_cell_size)
     cell_x = board_x + (cell.col * current_cell_size)
     cell_y = BOARD_TOP + (cell.row * current_cell_size)
@@ -304,6 +404,12 @@ class BoardRenderer
     )
   end
 
+  # Desenha as quatro linhas que formam a borda da célula.
+  #
+  # @param x [Numeric] posição horizontal da célula
+  # @param y [Numeric] posição vertical da célula
+  # @param current_cell_size [Numeric] tamanho da célula
+  # @return [void]
   def draw_cell_border(x, y, current_cell_size)
     right = x + current_cell_size
     bottom = y + current_cell_size
@@ -314,6 +420,11 @@ class BoardRenderer
     Gosu.draw_line(x, bottom, GRID_COLOR, right, bottom, GRID_COLOR, 3)
   end
 
+  # Escolhe a cor de uma célula de acordo com seu estado.
+  #
+  # @param cell [Cell] célula consultada
+  # @param reveal_ships [Boolean] informa se navios podem ser revelados
+  # @return [Gosu::Color] cor escolhida
   def cell_color(cell, reveal_ships)
     case cell.status
     when :miss
@@ -331,6 +442,13 @@ class BoardRenderer
     end
   end
 
+  # Desenha a marca de água, acerto ou navio afundado.
+  #
+  # @param cell [Cell] célula com o estado do ataque
+  # @param x [Numeric] posição horizontal da célula
+  # @param y [Numeric] posição vertical da célula
+  # @param current_cell_size [Numeric] tamanho da célula
+  # @return [void]
   def draw_cell_status(cell, x, y, current_cell_size)
     case cell.status
     when :miss
@@ -353,6 +471,12 @@ class BoardRenderer
     end
   end
 
+  # Desenha o pequeno marcador usado quando o ataque cai na água.
+  #
+  # @param x [Numeric] posição horizontal da célula
+  # @param y [Numeric] posição vertical da célula
+  # @param current_cell_size [Numeric] tamanho da célula
+  # @return [void]
   def draw_miss_marker(x, y, current_cell_size)
     marker_size = [current_cell_size * 0.16, 7].max
 
@@ -369,6 +493,14 @@ class BoardRenderer
     )
   end
 
+  # Desenha um X sobre uma célula atingida.
+  #
+  # @param x [Numeric] posição horizontal da célula
+  # @param y [Numeric] posição vertical da célula
+  # @param current_cell_size [Numeric] tamanho da célula
+  # @param color [Gosu::Color] cor do marcador
+  # @param thickness [Integer] quantidade de linhas usadas na espessura
+  # @return [void]
   def draw_x_marker(
     x,
     y,
@@ -406,6 +538,10 @@ class BoardRenderer
     end
   end
 
+  # Carrega uma imagem de navio e devolve nil quando ela não existe.
+  #
+  # @param file_name [String] nome do arquivo da imagem
+  # @return [Gosu::Image, nil] imagem carregada ou nil
   def load_ship_image(file_name)
     path = File.join(ASSET_PATH, file_name)
     return nil unless File.file?(path)

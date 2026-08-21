@@ -3,6 +3,11 @@
 require "gosu"
 require_relative "board_renderer"
 
+# Desenha o míssil viajando até a área atacada e mostra sua explosão.
+# O efeito é apenas visual e não modifica o tabuleiro da partida.
+#
+# @author Raffael Wagner
+# @version 1.0
 class MissileAttackEffect
   TRAVEL_DURATION_MS = 600
   EXPLOSION_DURATION_MS = 350
@@ -24,6 +29,13 @@ class MissileAttackEffect
     keyword_init: true
   )
 
+  # Prepara o sprite, o relógio e as funções de desenho do efeito.
+  #
+  # @param image [Gosu::Image] sprite usado para representar o míssil
+  # @param clock [#call] objeto que devolve o tempo em milissegundos
+  # @param line_drawer [#call] função usada para desenhar os raios
+  # @param rect_drawer [#call] função usada para desenhar o clarão
+  # @return [MissileAttackEffect] efeito criado
   def initialize(
     image,
     clock: -> { Gosu.milliseconds },
@@ -37,6 +49,13 @@ class MissileAttackEffect
     @effect = nil
   end
 
+  # Inicia a queda do míssil no centro das células atingidas.
+  #
+  # @param board_size [Integer] tamanho do tabuleiro inimigo
+  # @param board_x [Numeric] posição horizontal inicial do tabuleiro
+  # @param target_cells [Array<Array<Integer>>] coordenadas atingidas pelo míssil
+  # @return [Effect] dados do efeito iniciado
+  # @raise [ArgumentError] quando nenhuma célula é recebida
   def start(board_size:, board_x:, target_cells:)
     unless target_cells.is_a?(Array) && target_cells.any?
       raise ArgumentError, "O efeito do míssil precisa de células-alvo"
@@ -64,16 +83,25 @@ class MissileAttackEffect
     )
   end
 
+  # Informa se o míssil ou a explosão ainda estão sendo mostrados.
+  #
+  # @return [Boolean] true enquanto o efeito estiver ativo
   def active?
     !@effect.nil?
   end
 
+  # Encerra o efeito depois do tempo total da animação.
+  #
+  # @return [void]
   def update
     return unless active?
 
     @effect = nil if elapsed_ms >= TOTAL_DURATION_MS
   end
 
+  # Desenha a queda do míssil ou a explosão, dependendo do tempo atual.
+  #
+  # @return [void]
   def draw
     return unless active?
 
@@ -86,19 +114,31 @@ class MissileAttackEffect
 
   private
 
+  # Calcula o tempo passado desde o começo do efeito.
+  #
+  # @return [Numeric] tempo decorrido em milissegundos
   def elapsed_ms
     @clock.call - @effect.started_at
   end
 
+  # Calcula o progresso da parte em que o míssil está caindo.
+  #
+  # @return [Float] valor entre 0 e 1
   def travel_progress
     [[elapsed_ms.to_f / TRAVEL_DURATION_MS, 0.0].max, 1.0].min
   end
 
+  # Calcula o progresso da explosão depois que o míssil chega ao alvo.
+  #
+  # @return [Float] valor entre 0 e 1
   def explosion_progress
     elapsed = elapsed_ms - TRAVEL_DURATION_MS
     [[elapsed.to_f / EXPLOSION_DURATION_MS, 0.0].max, 1.0].min
   end
 
+  # Desenha o sprite descendo e uma linha clara atrás dele.
+  #
+  # @return [void]
   def draw_falling_missile
     start_y = BoardRenderer::BOARD_TOP - START_OFFSET
     progress = travel_progress**2
@@ -128,6 +168,9 @@ class MissileAttackEffect
     )
   end
 
+  # Desenha o clarão e os raios que representam a explosão 2x2.
+  #
+  # @return [void]
   def draw_explosion
     progress = explosion_progress
     expansion = 8 + (progress * 28)
