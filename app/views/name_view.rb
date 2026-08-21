@@ -28,8 +28,7 @@ class NameView
     @on_submit = on_submit
     @text_input = Gosu::TextInput.new
     @message = ""
-    @background = Gosu::Image.new(File.join(ASSET_PATH, "fundo_ranking.png"))
-    @title_font = Gosu::Font.new(42)
+    @background = Gosu::Image.new(File.join(ASSET_PATH, "fundo_vitoria.png"))
     @text_font = Gosu::Font.new(26)
     @small_font = Gosu::Font.new(20)
 
@@ -38,7 +37,6 @@ class NameView
 
   def draw
     draw_background
-    draw_centered(@title_font, "VITÓRIA!", 205, Gosu::Color::YELLOW)
     draw_centered(@text_font, "Digite o nome do vencedor", 275, Gosu::Color::WHITE)
     draw_input
     draw_confirm

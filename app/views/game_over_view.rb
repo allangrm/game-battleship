@@ -14,6 +14,11 @@ class GameOverView
   BACK_Y = 30
   RANKING_X = 920
   RANKING_Y = 490
+  RESULT_PANEL_X = 424
+  RESULT_PANEL_Y = 285
+  RESULT_PANEL_WIDTH = 560
+  RESULT_PANEL_HEIGHT = 190
+  RESULT_PANEL_COLOR = Gosu::Color.rgba(0, 0, 0, 155)
 
   attr_reader :game, :player, :score, :saved_match_id, :persistence_error
 
@@ -31,22 +36,20 @@ class GameOverView
     @score = score
     @saved_match_id = saved_match_id
     @persistence_error = persistence_error
-    @background = load_image("fundo_ranking.png")
+    background_file = game.victory? ? "fundo_vitoria.png" : "fundo_derrota.png"
+    @background = load_image(background_file)
     @back_image = load_image("botao_voltar_play.png")
     @ranking_image = load_image("botao_ranking.png")
-    @title_font = Gosu::Font.new(46)
     @text_font = Gosu::Font.new(26)
     @small_font = Gosu::Font.new(18)
   end
 
   def draw
     draw_background
+    draw_result_panel
     @back_image.draw(BACK_X, BACK_Y, 4)
     @ranking_image.draw(RANKING_X, RANKING_Y, 4)
 
-    result = game.victory? ? "VITÓRIA" : "DERROTA"
-    color = game.victory? ? Gosu::Color::YELLOW : Gosu::Color::WHITE
-    draw_centered(@title_font, result, 230, color)
     draw_centered(@text_font, "Jogador: #{player.name}", 310, Gosu::Color::WHITE) if player
     draw_centered(@text_font, "Pontuação: #{score}", 355, Gosu::Color::YELLOW)
     draw_centered(@text_font, "Duração: #{game.duration_seconds}s", 400, Gosu::Color::WHITE)
@@ -65,6 +68,17 @@ class GameOverView
   end
 
   private
+
+  def draw_result_panel
+    Gosu.draw_rect(
+      RESULT_PANEL_X,
+      RESULT_PANEL_Y,
+      RESULT_PANEL_WIDTH,
+      RESULT_PANEL_HEIGHT,
+      RESULT_PANEL_COLOR,
+      2
+    )
+  end
 
   def draw_persistence_status
     if persistence_error
