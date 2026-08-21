@@ -11,6 +11,7 @@ require_relative "../weapons/airplane"
 
 class GameView
   ASSET_PATH = File.expand_path("../models/images", __dir__)
+  SOUND_PATH = File.expand_path("../../shared/soundtrack", __dir__)
 
   BACKGROUND_FILES = {
     poca: "mapa_poca.jpeg",
@@ -60,6 +61,8 @@ class GameView
     @airplane_image = load_image("botao_aviao.png")
     @airplane_attack_effect = AirplaneAttackEffect.new(load_image("aviao.png"))
     @missile_attack_effect = MissileAttackEffect.new(load_image("missil.png"))
+    @basic_shot_sound = load_sound("tiro.ogg")
+    @special_shot_sound = load_sound("tiro_arma_especial.ogg")
     @special_title_font = Gosu::Font.new(17)
     @special_counter_font = Gosu::Font.new(16)
     @orientation_font = Gosu::Font.new(15)
@@ -212,6 +215,7 @@ class GameView
       **options
     )
 
+    play_attack_sound(weapon)
     start_airplane_attack_effect(row, col) if weapon.is_a?(Airplane)
     start_missile_attack_effect(row, col) if weapon.is_a?(Missile)
 
@@ -409,6 +413,18 @@ class GameView
 
   def load_image(name)
     Gosu::Image.new(File.join(ASSET_PATH, name))
+  end
+
+  def load_sound(name)
+    Gosu::Sample.new(File.join(SOUND_PATH, name))
+  end
+
+  def play_attack_sound(weapon)
+    if weapon.is_a?(BasicShot)
+      @basic_shot_sound.play(0.5)
+    else
+      @special_shot_sound.play(0.6)
+    end
   end
 
   def draw_special_weapon_button(weapon, button)

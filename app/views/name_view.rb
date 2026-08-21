@@ -37,7 +37,6 @@ class NameView
 
   def draw
     draw_background
-    draw_centered(@text_font, "Digite o nome do vencedor", 275, Gosu::Color::WHITE)
     draw_input
     draw_confirm
     draw_centered(@small_font, @message, 530, Gosu::Color::YELLOW) unless @message.empty?
