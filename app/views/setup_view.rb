@@ -7,7 +7,7 @@ require_relative "components/board_renderer"
 # automaticamente. Toda alteração do domínio passa pelo SetupController.
 #
 # @author Lívia Ferreira
-# @version 1.1
+# @version 1.3
 class SetupView
   ASSET_PATH = File.expand_path("../models/images", __dir__)
   BACKGROUND_FILES = {
@@ -23,6 +23,14 @@ class SetupView
   CONTROL_HEIGHT = 48
   CONTROL_GAP = 14
   CONTROL_START_Y = 175
+  PREVIEW_X = CONTROL_X
+  PREVIEW_Y = 45
+  PREVIEW_WIDTH = CONTROL_WIDTH
+  PREVIEW_HEIGHT = 110
+  PREVIEW_IMAGE_X = PREVIEW_X + 240
+  PREVIEW_IMAGE_Y = PREVIEW_Y + 16
+  PREVIEW_IMAGE_WIDTH = 296
+  PREVIEW_IMAGE_HEIGHT = 78
 
   NORMAL_COLOR = Gosu::Color.rgba(30, 30, 30, 210)
   HOVER_COLOR = Gosu::Color.rgba(120, 90, 20, 230)
@@ -40,6 +48,12 @@ class SetupView
 
     @background = load_image(BACKGROUND_FILES.fetch(controller.map_config.map_type))
     @back_image = load_image("botao_voltar_play.png")
+    @ship_images = {
+      "Barco" => load_image("navio_barco_perfil.png"),
+      "Fragata" => load_image("navio_fragata_perfil.png"),
+      "Corveta" => load_image("navio_corveta_perfil.png"),
+      "Submarino" => load_image("navio-submarino_perfil.png")
+    }
 
     # Artes próprias poderão substituir os controles desenhados quando forem
     # entregues, sem alterar a lógica ou o controller.
@@ -60,6 +74,7 @@ class SetupView
     draw_background
     draw_back_button
     draw_board
+    draw_ship_preview
     draw_controls
     draw_status
   end
@@ -108,6 +123,67 @@ class SetupView
       title: "POSICIONE SUA FROTA",
       reveal_ships: true
     )
+  end
+
+  def draw_ship_preview
+    ship = @controller.next_ship
+    Gosu.draw_rect(
+      PREVIEW_X,
+      PREVIEW_Y,
+      PREVIEW_WIDTH,
+      PREVIEW_HEIGHT,
+      NORMAL_COLOR,
+      4
+    )
+
+    unless ship
+      draw_preview_text("Frota pronta para a batalha", PREVIEW_Y + 42)
+      return
+    end
+
+    @text_font.draw_text(ship.name, PREVIEW_X + 24, PREVIEW_Y + 25, 5, 1, 1, TEXT_COLOR)
+    @small_font.draw_text(
+      "#{ship.size} casas",
+      PREVIEW_X + 24,
+      PREVIEW_Y + 65,
+      5,
+      1,
+      1,
+      MESSAGE_COLOR
+    )
+
+    image = @ship_images[ship.name]
+    if image
+      draw_preview_image(image)
+    else
+      @small_font.draw_text(
+        "Imagem ainda não adicionada",
+        PREVIEW_IMAGE_X,
+        PREVIEW_Y + 45,
+        5,
+        1,
+        1,
+        TEXT_COLOR
+      )
+    end
+  end
+
+  def draw_preview_image(image)
+    scale = [
+      PREVIEW_IMAGE_WIDTH.to_f / image.width,
+      PREVIEW_IMAGE_HEIGHT.to_f / image.height
+    ].min
+    drawn_width = image.width * scale
+    drawn_height = image.height * scale
+    image_x = PREVIEW_IMAGE_X + ((PREVIEW_IMAGE_WIDTH - drawn_width) / 2)
+    image_y = PREVIEW_IMAGE_Y + ((PREVIEW_IMAGE_HEIGHT - drawn_height) / 2)
+
+    image.draw(image_x, image_y, 5, scale, scale)
+  end
+
+  def draw_preview_text(text, y)
+    x = PREVIEW_X + ((PREVIEW_WIDTH - @text_font.text_width(text)) / 2)
+    @text_font.draw_text(text, x, y, 5, 1, 1, TEXT_COLOR)
   end
 
   def draw_controls
