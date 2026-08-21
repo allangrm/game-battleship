@@ -2,7 +2,21 @@
 
 require "gosu"
 
+# Desenha os tabuleiros, incluindo a representação visual da frota revelada.
+# As imagens são posicionadas sobre o conjunto de células de cada navio, sem
+# alterar o estado do Board nem a lógica de ataques.
+#
+# @author Lívia Ferreira
+# @version 1.2
 class BoardRenderer
+  ASSET_PATH = File.expand_path("../../models/images", __dir__)
+  SHIP_IMAGE_FILES = {
+    "Barco" => "navio_barco.png",
+    "Fragata" => "navio_fragata.png",
+    "Corveta" => "navio_corveta.png",
+    "Submarino" => "navio_submarino.png"
+  }.freeze
+
   CELL_SIZES = {
     5 => 76,
     8 => 54,
@@ -25,11 +39,17 @@ class BoardRenderer
 
   MARK_COLOR = Gosu::Color::WHITE
   SUNK_MARK_COLOR = Gosu::Color.rgb(80, 30, 10)
+  SHIP_LAYER = 2.5
+  SHIP_THICKNESS_RATIO = 0.78
+  SHIP_LENGTH_PADDING_RATIO = 0.04
 
   def initialize(window)
     @window = window
     @title_font = Gosu::Font.new(26)
     @coordinate_font = Gosu::Font.new(18)
+    @ship_images = SHIP_IMAGE_FILES.transform_values do |file_name|
+      load_ship_image(file_name)
+    end
   end
 
   def origins(board_size)
@@ -51,16 +71,9 @@ class BoardRenderer
     draw_title(title, x, board_width)
     draw_coordinates(board, x, current_cell_size)
 
-    board.grid.each do |row|
-      row.each do |cell|
-        draw_cell(
-          cell,
-          x,
-          current_cell_size,
-          reveal_ships
-        )
-      end
-    end
+    draw_cell_backgrounds(board, x, current_cell_size, reveal_ships)
+    draw_ships(board, x, current_cell_size) if reveal_ships
+    draw_cell_foregrounds(board, x, current_cell_size)
   end
 
   def coordinate_at(mouse_x, mouse_y, board, board_x)
@@ -197,7 +210,15 @@ class BoardRenderer
     )
   end
 
-  def draw_cell(cell, board_x, current_cell_size, reveal_ships)
+  def draw_cell_backgrounds(board, board_x, current_cell_size, reveal_ships)
+    board.grid.each do |row|
+      row.each do |cell|
+        draw_cell_background(cell, board_x, current_cell_size, reveal_ships)
+      end
+    end
+  end
+
+  def draw_cell_background(cell, board_x, current_cell_size, reveal_ships)
     cell_x = board_x + (cell.col * current_cell_size)
     cell_y = BOARD_TOP + (cell.row * current_cell_size)
 
@@ -211,6 +232,63 @@ class BoardRenderer
       color,
       2
     )
+  end
+
+  def draw_ships(board, board_x, current_cell_size)
+    board.ships.each do |ship|
+      image = @ship_images[ship.name]
+      next unless ship.placed? && image
+
+      draw_ship(ship, image, board_x, current_cell_size)
+    end
+  end
+
+  def draw_ship(ship, image, board_x, current_cell_size)
+    rows = ship.cells.map(&:row)
+    columns = ship.cells.map(&:col)
+    horizontal = rows.uniq.length == 1
+
+    first_row = rows.min
+    first_column = columns.min
+    ship_length = ship.size * current_cell_size
+    length_padding = current_cell_size * SHIP_LENGTH_PADDING_RATIO
+    drawn_length = ship_length - (length_padding * 2)
+    drawn_thickness = current_cell_size * SHIP_THICKNESS_RATIO
+
+    center_x = board_x + (first_column * current_cell_size)
+    center_y = BOARD_TOP + (first_row * current_cell_size)
+
+    if horizontal
+      center_x += ship_length / 2.0
+      center_y += current_cell_size / 2.0
+    else
+      center_x += current_cell_size / 2.0
+      center_y += ship_length / 2.0
+    end
+
+    image.draw_rot(
+      center_x,
+      center_y,
+      SHIP_LAYER,
+      horizontal ? 0 : 90,
+      0.5,
+      0.5,
+      drawn_length / image.width.to_f,
+      drawn_thickness / image.height.to_f
+    )
+  end
+
+  def draw_cell_foregrounds(board, board_x, current_cell_size)
+    board.grid.each do |row|
+      row.each do |cell|
+        draw_cell_foreground(cell, board_x, current_cell_size)
+      end
+    end
+  end
+
+  def draw_cell_foreground(cell, board_x, current_cell_size)
+    cell_x = board_x + (cell.col * current_cell_size)
+    cell_y = BOARD_TOP + (cell.row * current_cell_size)
 
     draw_cell_status(
       cell,
@@ -246,7 +324,7 @@ class BoardRenderer
       SUNK_COLOR
     else
       if reveal_ships && cell.occupied?
-        SHIP_COLOR
+        @ship_images[cell.ship.name] ? WATER_COLOR : SHIP_COLOR
       else
         WATER_COLOR
       end
@@ -326,5 +404,14 @@ class BoardRenderer
         4
       )
     end
+  end
+
+  def load_ship_image(file_name)
+    path = File.join(ASSET_PATH, file_name)
+    return nil unless File.file?(path)
+
+    Gosu::Image.new(path)
+  rescue StandardError
+    nil
   end
 end
