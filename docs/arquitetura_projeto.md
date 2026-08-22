@@ -9,7 +9,9 @@ Em caso de divergência, considere os documentos nesta ordem:
 1. [Requisitos do Projeto](./Requisitos_do_Projeto.md): escopo funcional e não funcional vigente.
 2. [Divisão Atualizada](./divisao.md): responsabilidades vigentes de P1, P2, P3 e P4.
 3. Este documento: arquitetura técnica consolidada.
-4. [Contrato de Integração de P2](./contrato_p2.md): detalhes da API do ciclo da partida.
+4. [Contrato de Integração de P1](./contrato_p1.md): models, mapas, posicionamento, pontuação e persistência.
+5. [Contrato de Integração de P2](./contrato_p2.md): detalhes da API do ciclo da partida.
+6. [Contrato entre P3 e P4](./contrato_p3_p4.md): transições entre setup, partida e pós-jogo.
 
 O PDF anterior é apenas uma referência histórica. Sua divisão de pessoas, roadmap, Git Flow e regras divergentes não devem orientar o desenvolvimento atual.
 
