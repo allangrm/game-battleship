@@ -206,7 +206,7 @@ class Board
 
   # Gera uma sequência horizontal ou vertical a partir de uma origem.
   #
-  # Este método é compartilhado pelo setup manual e pelo automático. Ele apenas
+  # Este metodo é compartilhado pelo setup manual e pelo automático. Ele apenas
   # monta coordenadas e verifica limites; sobreposição e geometria final são
   # confirmadas novamente por #valid_placement?.
   #

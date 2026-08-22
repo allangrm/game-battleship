@@ -122,7 +122,7 @@ class Database
     rows.map { |row| ranking_entry(row) }
   end
 
-  # Libera a conexão. A operação é idempotente.
+  # Libera a conexão.
   #
   # @return [nil]
   def close
