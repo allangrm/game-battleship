@@ -9,8 +9,20 @@ jogo recria uma Batalha Naval entre uma pessoa e o computador, com três mapas,
 posicionamento de frota, diferentes modos de turno, armas especiais, níveis de
 IA e persistência de pontuações em SQLite.
 
+## Sobre o projeto
 
-## 🎮 Fluxo do jogo
+O objetivo do projeto é aplicar, em um jogo completo, conceitos estudados na
+disciplina, especialmente programação orientada a objetos, modularização e
+separação de responsabilidades. A implementação combina composição entre os
+objetos do domínio, polimorfismo nas armas, Strategy nos modos de turno e uma
+organização inspirada em MVC para integrar regras, interface e persistência.
+
+Além da partida contra o computador, o sistema contempla posicionamento manual
+ou automático da frota, validação das jogadas, níveis de IA associados aos
+mapas, cálculo de pontuação e ranking persistente com desempate por duração.
+
+
+## Fluxo do jogo
 
 ```text
 Tela inicial
@@ -25,7 +37,26 @@ Tela inicial
 Depois da tela de resultado, o botão Voltar e a tecla `Esc` retornam à seleção
 de mapas.
 
-## 🗺️ Mapas e dificuldades
+## Telas do jogo
+
+
+| Menu principal | Seleção de mapa |
+|:---:|:---:|
+| <img src="docs/screenshots/menu_principal.png" width="400" alt="Menu principal"> | <img src="docs/screenshots/selecao_mapa.png" width="400" alt="Seleção de mapa"> |
+
+| Posicionamento da frota | Partida |
+|:---:|:---:|
+| <img src="docs/screenshots/posicionamento_frota.png" width="400" alt="Posicionamento da frota"> | <img src="docs/screenshots/partida.png" width="400" alt="Tela da partida"> |
+
+| Instruções | Ranking |
+|:---:|:---:|
+| <img src="docs/screenshots/instrucoes.png" width="400" alt="Instruções"> | <img src="docs/screenshots/ranking.png" width="400" alt="Ranking"> |
+
+| Vitória | Derrota |
+|:---:|:---:|
+| <img src="docs/screenshots/vitoria.png" width="400" alt="Tela de vitória"> | <img src="docs/screenshots/derrota.png" width="400" alt="Tela de derrota"> |
+
+## Mapas e dificuldades
 
 | Mapa | Tabuleiro | Frota | IA | Mísseis | Aviões |
 |---|---:|---:|---|---:|---:|
@@ -36,7 +67,7 @@ de mapas.
 A IA da Poça utiliza apenas o ataque básico. As IAs do Lago e do Oceano podem
 usar armas especiais de acordo com sua estratégia e inventário.
 
-## 💥 Armas
+## Armas
 
 | Arma | Comportamento |
 |---|---|
@@ -47,25 +78,27 @@ usar armas especiais de acordo com sua estratégia e inventário.
 As armas seguem um contrato polimórfico comum. A interface chama o mesmo
 `GameController`, independentemente da arma escolhida.
 
-## 🔁 Modos de turno
+## Modos de turno
 
 - **Um tiro por vez:** o turno sempre passa ao adversário depois de um ataque
   válido.
 - **Tiro adicional ao acertar:** o atacante continua jogando quando a ação
   acerta ou afunda uma embarcação.
 
-## 🕹️ Controles
+## ️ Controles
 
 | Ação | Controle |
 |---|---|
 | Navegar e selecionar | Botão esquerdo do mouse |
 | Posicionar navio | Clique em uma célula do tabuleiro aliado |
 | Alterar orientação no setup | `Espaço` ou botão de orientação |
+| Selecionar Míssil ou Avião | Clique no botão da arma durante a partida |
+| Alterar orientação do Avião | Selecione o Avião e clique no botão Linha/Coluna |
 | Confirmar o nome | `Enter` ou botão Confirmar |
 | Voltar | Botão Voltar ou `Esc` |
 | Atacar | Clique em uma célula do tabuleiro inimigo |
 
-## 🛠️ Tecnologias
+## Tecnologias
 
 - [Ruby](https://www.ruby-lang.org/)
 - [Gosu](https://www.libgosu.org/) `1.4.6`
@@ -73,7 +106,7 @@ As armas seguem um contrato polimórfico comum. A interface chama o mesmo
 - [Minitest](https://github.com/minitest/minitest) `6.0.0`
 - Bundler
 
-## 📦 Instalação
+## Instalação
 
 ### Pré-requisitos
 
@@ -112,12 +145,12 @@ bundle exec ruby main.rb
 A classe principal aberta pelo executável é `MainWindow`, localizada em
 `app/views/main_window.rb`.
 
-## 🧪 Testes
+## Testes
 
 Para executar toda a suíte:
 
 ```powershell
-bundle exec ruby -Itest -e 'Dir["test/**/*_test.rb"].sort.each { |file| require File.expand_path(file) }'
+bundle exec ruby -Itest -e "Dir[%q{test/**/*_test.rb}].sort.each { |file| require File.expand_path(file) }"
 ```
 
 A suíte atual possui **91 testes automatizados**, cobrindo:
@@ -132,7 +165,7 @@ A suíte atual possui **91 testes automatizados**, cobrindo:
 
 > Os testes de banco exigem que a gem `sqlite3` esteja instalada corretamente.
 
-## 🧱 Arquitetura
+## Arquitetura
 
 O projeto segue uma organização inspirada em MVC:
 
@@ -157,7 +190,7 @@ Princípios utilizados:
 - `MainWindow` cuida somente da janela, navegação e view ativa.
 - SQLite concentra jogadores, partidas, pontuações e duração.
 
-## 🧮 Pontuação
+## Pontuação
 
 A pontuação final considera acertos, embarcações sobreviventes, integridade da
 frota e duração:
@@ -172,16 +205,23 @@ frota e duração:
 O resultado mínimo é zero. No ranking, pontuações maiores aparecem primeiro e
 o menor tempo é utilizado como critério de desempate.
 
+## Autores
 
-## 📚 Documentação
+- **Allan Guilherme** [(@allguilherm)](https://github.com/allangrm)
+- **Júlio Pedro** [(@julioP-dev)](https://github.com/julioP-dev)
+- **Lívia Ferreira** [(@livdenner)](https://github.com/livdenner)
+- **Raffael Wagner** [(@Raffael-Wagner)](https://github.com/Raffael-Wagner) 
+
+## Documentação
 
 - [Requisitos do projeto](docs/Requisitos_do_Projeto.md)
 - [Arquitetura e estado técnico](docs/arquitetura_projeto.md)
 - [Divisão da equipe](docs/divisao.md)
+- [Contrato de models, pontuação e banco](docs/contrato_p1.md)
 - [Contrato da lógica de partida](docs/contrato_p2.md)
 - [Contrato entre pré e pós-partida](docs/contrato_p3_p4.md)
 
-## 📄 Licença
+## Licença
 
 Este projeto está distribuído sob a licença
 [GNU General Public License v3.0](LICENSE).
